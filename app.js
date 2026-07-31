@@ -197,11 +197,22 @@ function attachTypeTooltip(row, tooltip) {
         hide();
       }
     });
+    // The visible tooltip is tappable: pressing it closes it (and never
+    // toggles the row beneath it, thanks to stopPropagation). Hidden tooltips
+    // keep pointer-events: none so they never intercept anything.
+    tooltip.addEventListener('click', function (e) {
+      e.stopPropagation();
+      hide();
+    });
   } else {
     row.addEventListener('mouseover', show);
     row.addEventListener('mouseout', hide);
     row.addEventListener('focus', show);
     row.addEventListener('blur', hide);
+    tooltip.addEventListener('click', function (e) {
+      e.stopPropagation();
+      hide();
+    });
   }
 }
 

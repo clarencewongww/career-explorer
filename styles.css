@@ -1383,10 +1383,10 @@ body {
 .reveal__topmark:focus .type-tooltip {
   opacity: 1;
   transform: translate(0, -50%) scale(1);
+  /* The visible tooltip is tappable so pressing it (or the row) closes it;
+     hidden tooltips keep the base pointer-events: none. */
+  pointer-events: auto;
 }
-
-/* pointer-events stays none even when shown — the tooltip is informational
-   only, so taps pass through to the content underneath */
 
 .riasec-tally__row:hover .type-tooltip--below,
 .riasec-tally__row:focus-visible .type-tooltip--below,
@@ -2824,7 +2824,7 @@ body {
 
   /* The collating beat is a full-screen moment — it keeps filling the viewport */
   .zine.collating {
-    min-height: calc(100vh - 32px);
+    min-height: calc(100vh - 44px);
   }
 
   .journey .zine.collating {
@@ -2847,6 +2847,8 @@ body {
   .app-footer {
     gap: 8px;
     padding: 0 10px;
+    /* The 44px-min buttons must fit the bar — no overflow above/below */
+    height: 44px;
   }
 
   .app-footer__page {
@@ -2856,6 +2858,7 @@ body {
   .app-footer__back,
   .theme-toggle {
     padding: 0 6px;
+    min-height: 44px;
   }
 
   /* TEST-ONLY button — compact so it fits next to Back/theme/page on phones */
@@ -2866,6 +2869,17 @@ body {
     min-height: 32px;
     min-width: 0;
     white-space: nowrap;
+  }
+
+  /* Fitting pages must not scroll at all: the fixed-footer clearance moves
+     from the body (which always added 40px of scroll height) to the content
+     that genuinely scrolls. */
+  body {
+    padding-bottom: 0;
+  }
+
+  .reveal .career-cards {
+    padding-bottom: 64px; /* last card's CTA clears the 44px footer */
   }
 }
 

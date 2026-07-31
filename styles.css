@@ -20,7 +20,8 @@ html {
 
 body {
   min-height: 100vh;
-  padding-bottom: 40px;
+  min-height: 100dvh; /* dynamic viewport: sizes to the VISIBLE area (iOS address bar) */
+  padding-bottom: 48px; /* clearance for the fixed 44px footer */
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
@@ -224,7 +225,8 @@ ul, ol {
 .zine {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--gutter) minmax(0, 1fr);
-  min-height: calc(100vh - 32px);
+  min-height: calc(100vh - 44px);
+  min-height: calc(100dvh - 44px);
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
@@ -1715,6 +1717,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 72px);
+  min-height: calc(100dvh - 72px);
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
@@ -1887,6 +1890,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   padding-bottom: 0;
 }
 
@@ -1903,7 +1907,7 @@ body {
   right: 0;
   z-index: 100;
   width: 100%;
-  height: 32px;
+  height: 44px; /* matches the 44px-min buttons so nothing overflows the bar */
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -2140,10 +2144,11 @@ body {
 }
 
 /* Desktop: the reveal spread is constrained to the viewport above the fixed
-   footer (32px). The left page stays steady; only the right page scrolls. */
+   footer (44px). The left page stays steady; only the right page scrolls. */
 @media (min-width: 768px) {
   .zine.reveal {
-    height: calc(100vh - 32px);
+    height: calc(100vh - 44px);
+    height: calc(100dvh - 44px);
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
   }
@@ -2825,6 +2830,7 @@ body {
   /* The collating beat is a full-screen moment — it keeps filling the viewport */
   .zine.collating {
     min-height: calc(100vh - 44px);
+    min-height: calc(100dvh - 44px);
   }
 
   .journey .zine.collating {
@@ -2847,8 +2853,6 @@ body {
   .app-footer {
     gap: 8px;
     padding: 0 10px;
-    /* The 44px-min buttons must fit the bar — no overflow above/below */
-    height: 44px;
   }
 
   .app-footer__page {

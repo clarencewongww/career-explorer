@@ -173,47 +173,50 @@ function attachTypeTooltip(row, tooltip) {
     row.style.zIndex = '';
     tooltip.setAttribute('aria-hidden', 'true');
   }
-  // Touch devices have no hover and synthesize misleading mouse events around
-  // a tap, so pick one interaction channel per device: touch → tap toggles the
-  // tooltip (a tap anywhere else closes it); pointer devices → hover/focus.
-  var touchDevice = window.matchMedia && window.matchMedia('(hover: none)').matches;
-  if (touchDevice) {
-    var openedBeforeGesture = null;
-    row.addEventListener('touchstart', function () {
-      openedBeforeGesture = tooltip.getAttribute('aria-hidden') === 'false';
-    });
-    row.addEventListener('click', function () {
-      if (openedBeforeGesture === null) return; // synthesized click without a real tap
-      var wasOpen = openedBeforeGesture;
-      openedBeforeGesture = null;
-      if (wasOpen) {
-        hide();
-      } else {
-        show();
-      }
-    });
-    document.addEventListener('click', function (e) {
-      if (tooltip.getAttribute('aria-hidden') === 'false' && !row.contains(e.target)) {
-        hide();
-      }
-    });
-    // The visible tooltip is tappable: pressing it closes it (and never
-    // toggles the row beneath it, thanks to stopPropagation). Hidden tooltips
-    // keep pointer-events: none so they never intercept anything.
-    tooltip.addEventListener('click', function (e) {
-      e.stopPropagation();
+  // Touch: a press toggles the tooltip — first press opens it, pressing the
+  // row or the open tooltip again closes it. This works on every touch device
+  // (the hover media query is not a reliable touch detector on hybrids).
+  // Synthesized hover events that follow a tap are ignored for a short window
+  // so they can't re-open or close the tooltip right after the toggle.
+  var lastTouchAt = 0;
+  row.addEventListener('touchstart', function () {
+    lastTouchAt = Date.now();
+    if (tooltip.getAttribute('aria-hidden') === 'false') {
       hide();
-    });
-  } else {
-    row.addEventListener('mouseover', show);
-    row.addEventListener('mouseout', hide);
-    row.addEventListener('focus', show);
-    row.addEventListener('blur', hide);
-    tooltip.addEventListener('click', function (e) {
-      e.stopPropagation();
+    } else {
+      show();
+    }
+  });
+  // A press anywhere else closes the open tooltip.
+  document.addEventListener('click', function (e) {
+    if (tooltip.getAttribute('aria-hidden') === 'false' && !row.contains(e.target)) {
       hide();
-    });
-  }
+    }
+  });
+  // Pressing the open tooltip itself closes it (and never toggles the row
+  // beneath it, thanks to stopPropagation). Hidden tooltips keep
+  // pointer-events: none so they never intercept anything.
+  tooltip.addEventListener('click', function (e) {
+    e.stopPropagation();
+    hide();
+  });
+  // Hover/focus for pointer devices.
+  row.addEventListener('mouseover', function () {
+    if (Date.now() - lastTouchAt < 600) return;
+    show();
+  });
+  row.addEventListener('mouseout', function () {
+    if (Date.now() - lastTouchAt < 600) return;
+    hide();
+  });
+  row.addEventListener('focus', function () {
+    if (Date.now() - lastTouchAt < 600) return;
+    show();
+  });
+  row.addEventListener('blur', function () {
+    if (Date.now() - lastTouchAt < 600) return;
+    hide();
+  });
 }
 
 // Normalize a career's RIASEC letters: accepts an array (['R','I','A']) or a string ('RIA')

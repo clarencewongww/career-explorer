@@ -31,7 +31,7 @@ python3 -m http.server
 
 - **Careers:** edit `careers-data.js` (each entry: `{ id, name, letters }`). Tier, role description, and day-in-life copy are generated at render time from the career's RIASEC letters — per-career researched copy is planned content work.
 - **Quiz:** edit `quiz-data.js`.
-- **Matching:** the reveal logic (`scoreCareerMatch`, `getCareerTier`, `pickRevealCareers` in `app.js`) computes up to 4 tiered picks from the user's top letters.
+- **Matching:** the reveal logic (`scoreCareerMatch`, `getCareerTier`, `pickRevealCareers` in `app.js`) computes up to 4 tiered picks from the user's top letters. On the reveal, students can **keep** cards (tap a card or its `KEEP` stamp) and **shuffle the rest** ("Show me different careers →") — kept and previously shown careers are excluded, so shuffles never repeat (`state.revealKeptIds` / `state.revealSeenIds`). Ordering is viewport-aware: desktop keeps slots stable and renders compact cards that all fit one view; mobile sorts fresh cards to the top and auto-scrolls to them.
 - **Workbook:** Sections 2–7 (Your Drivers, Your Strengths, Your Growth, Pros and Cons, Immediate Preparation, Degree Preparation) and saved progress are planned but not built.
 
 ## Planned but not built

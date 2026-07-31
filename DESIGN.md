@@ -112,7 +112,7 @@ Workbook input fields use ruled-paper lines (`repeated-linear-gradient` from `--
 - **first-run / empty:** the default — no saved progress; the zine opens on the intro spread.
 - **in-progress quiz:** the page-fold animates forward/back through items; `Back` returns one item.
 - **quiz collating:** the reveal entry — a 5-second authored beat (built pass 2026-08): six RIASEC stamp tiles fill one by one on a paper strip, a percentage ticks 0→100%, italic captions rotate, "Ready!" holds, then the page folds to the reveal. Loading placeholder reads "Collating…". Reduced motion: instant fill + short beat.
-- **reveal:** career cards (up to 4) are arranged across the right spread page (desktop: right page scrolls under a steady left page; mobile: single column); hovering/tapping a card exposes "Discover more →".
+- **reveal:** career cards (up to 4) are arranged across the right spread page (desktop: right page scrolls under a steady left page; mobile: single column). Tapping a card (or its `KEEP` corner stamp) keeps it — kept cards show a tape accent and a `KEPT ✓` stamp; "Show me different careers →" shuffles only the non-kept cards with fresh, never-repeated matches. On desktop the cards render compact (line-clamped blurbs) so all four fit the viewport and shuffle swaps non-kept slots in place; on mobile fresh cards sort to the top and the view auto-scrolls to them. Freshly swapped cards stamp in with a quick scale/ink press. Hovering/tapping a card exposes "Discover more →".
 - **workbook in-progress:** ruled-line input accepts typing; an AI-guided dialogue thread appears alongside/stitched into the spread; section progress stamps fill in as sections advance.
 
 ## Accessibility

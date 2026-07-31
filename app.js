@@ -12,7 +12,10 @@ let state = {
   quizAnswers: {},
   riasecProfile: null,
   selectedCareer: null,
-  workbookContent: {}
+  workbookContent: {},
+  revealKeptIds: [],
+  revealSeenIds: [],
+  revealCardIds: []
 };
 
 const TOTAL_STEPS = 1 + 1 + (window.QUIZ_ITEMS ? window.QUIZ_ITEMS.length : 0) + 2; // 1 welcome + 1 intro + N quiz + 1 collating/reveal + 1 workbook
@@ -360,14 +363,20 @@ function compareCareerPicks(a, b) {
  * invented for it.
  *
  * @param {Object} profile  { R, I, A, S, E, C } scores
+ * @param {string[]} [excludeIds]  Career ids that must not be picked
  * @return {Array<{ career, score, tier }>}  up to 4 picks, best first
  */
-function pickRevealCareers(profile) {
+function pickRevealCareers(profile, excludeIds) {
   var topLetters = getUserTopLetters(profile || {});
   var all = dedupeCareers(window.CAREERS || []);
+  var excluded = {};
+  if (excludeIds) {
+    for (var e = 0; e < excludeIds.length; e++) excluded[excludeIds[e]] = true;
+  }
   var matches = [];
 
   for (var i = 0; i < all.length; i++) {
+    if (excluded[all[i].id]) continue;
     var score = scoreCareerMatch(all[i], topLetters);
     if (score <= 0) continue;
     matches.push({
@@ -1365,14 +1374,20 @@ function buildDayLife(career) {
   return lines;
 }
 
-// Build a single .career-card article for one pick
-function renderCareerCard(pick) {
+// Build a single .career-card article for one pick. kept marks the card as
+// kept (stamp state + data-kept), and the whole card toggles keep on tap.
+// fresh marks a card whose content is newly shown this render — it gets the
+// stamp-in entrance animation (see .career-card--fresh in styles.css).
+function renderCareerCard(pick, kept, fresh) {
   var career = pick.career;
   var letters = careerLetters(career);
   var tier = pick.tier;
 
   var article = document.createElement('article');
   article.className = 'career-card';
+  article.setAttribute('data-kept', kept ? 'true' : 'false');
+  if (kept) article.classList.add('career-card--kept');
+  if (fresh) article.classList.add('career-card--fresh');
 
   // Career name
   var nameEl = document.createElement('h3');
@@ -1457,13 +1472,107 @@ function renderCareerCard(pick) {
   })(career));
   article.appendChild(openBtn);
 
+  // Corner keep stamp — the accessible control for toggling keep. It calls
+  // stopPropagation so the whole-card tap handler below never double-fires.
+  var keepBtn = document.createElement('button');
+  keepBtn.type = 'button';
+  keepBtn.className = 'career-card__keep min-tap';
+  keepBtn.setAttribute('aria-pressed', kept ? 'true' : 'false');
+  keepBtn.textContent = kept ? 'KEPT \u2713' : 'KEEP';
+  keepBtn.addEventListener('click', (function (c) {
+    return function (e) {
+      e.stopPropagation();
+      toggleKeep(c.id);
+    };
+  })(career));
+  article.appendChild(keepBtn);
+
+  // Whole-card tap toggles keep — but never for Discover-more or the stamp
+  article.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.career-card__discover')) return;
+    if (e.target.closest && e.target.closest('.career-card__keep')) return;
+    toggleKeep(career.id);
+  });
+
   return article;
 }
 
 function renderReveal() {
   var profile = state.riasecProfile || {};
-  var picks = pickRevealCareers(profile);
   var topLetters = getUserTopLetters(profile);
+  var excluded = state.revealKeptIds.concat(state.revealSeenIds);
+  var freshPicks = pickRevealCareers(profile, excluded);
+  // Capture the previous display order BEFORE overwriting it below — it drives
+  // both the desktop slot-stable ordering and the fresh-card animation.
+  var prevCardIds = (state.revealCardIds || []).slice();
+
+  // Kept-career lookup, shared by both viewport layouts.
+  var keptPicks = [];
+  var byId = {};
+  if (state.revealKeptIds.length) {
+    var all = dedupeCareers(window.CAREERS || []);
+    for (var a = 0; a < all.length; a++) byId[all[a].id] = all[a];
+    for (var k = 0; k < state.revealKeptIds.length; k++) {
+      var keptCareer = byId[state.revealKeptIds[k]];
+      if (!keptCareer) continue;
+      keptPicks.push({
+        career: keptCareer,
+        score: scoreCareerMatch(keptCareer, topLetters),
+        tier: getCareerTier(keptCareer, topLetters),
+        idx: -1
+      });
+    }
+  }
+
+  // Viewport-aware ordering. Desktop keeps the previous display order so a
+  // kept card never moves slots and a shuffle swaps content only in non-kept
+  // slots. Mobile (single column) shows fresh suggestions first, kept cards
+  // dropping to the bottom.
+  var picks;
+  if (window.innerWidth >= 768 && prevCardIds.length) {
+    var usedFresh = {};
+    var nextFresh = 0;
+    var ordered = [];
+    for (var s = 0; s < prevCardIds.length; s++) {
+      var prevId = prevCardIds[s];
+      if (state.revealKeptIds.indexOf(prevId) !== -1 && byId[prevId]) {
+        // Kept — locked into its previous slot
+        var lockedCareer = byId[prevId];
+        ordered.push({
+          career: lockedCareer,
+          score: scoreCareerMatch(lockedCareer, topLetters),
+          tier: getCareerTier(lockedCareer, topLetters),
+          idx: -1
+        });
+      } else {
+        // Slot's old content is gone or unkept — swap in the next fresh pick
+        while (nextFresh < freshPicks.length && usedFresh[freshPicks[nextFresh].career.id]) nextFresh++;
+        if (nextFresh < freshPicks.length) {
+          ordered.push(freshPicks[nextFresh]);
+          usedFresh[freshPicks[nextFresh].career.id] = true;
+          nextFresh++;
+        }
+      }
+    }
+    // Append any remaining fresh picks, then cap at four
+    for (; nextFresh < freshPicks.length && ordered.length < 4; nextFresh++) {
+      if (usedFresh[freshPicks[nextFresh].career.id]) continue;
+      ordered.push(freshPicks[nextFresh]);
+      usedFresh[freshPicks[nextFresh].career.id] = true;
+    }
+    picks = ordered.slice(0, 4);
+  } else if (window.innerWidth >= 768) {
+    // First visit — fresh picks in their natural order
+    picks = freshPicks.slice(0, 4);
+  } else {
+    // Mobile — fresh suggestions first, kept cards drop to the bottom. Kept
+    // cards always reserve their slots so they can never be pushed off-grid.
+    var freshRoom = Math.max(0, 4 - keptPicks.length);
+    picks = freshPicks.slice(0, freshRoom).concat(keptPicks).slice(0, 4);
+  }
+
+  // Record the displayed order for the next render's slot-stability
+  state.revealCardIds = picks.map(function (p) { return p.career.id; });
 
   var zine = document.createElement('div');
   zine.className = 'zine reveal';
@@ -1567,6 +1676,67 @@ function renderReveal() {
   rightLabel.textContent = 'CAREER CARDS';
   right.appendChild(rightLabel);
 
+  // Keep & regenerate action bar
+  var actions = document.createElement('div');
+  actions.className = 'reveal__actions';
+
+  var helperCopy = document.createElement('p');
+  helperCopy.className = 'reveal__actions-copy';
+  helperCopy.textContent = 'Tap a card to keep it \u2014 kept cards stay when you shuffle.';
+  actions.appendChild(helperCopy);
+
+  var counter = document.createElement('span');
+  counter.className = 'reveal__counter';
+  counter.setAttribute('aria-live', 'polite');
+  counter.setAttribute('aria-atomic', 'true');
+  counter.textContent = state.revealKeptIds.length + ' of ' + picks.length + ' kept';
+  actions.appendChild(counter);
+
+  var allKept = picks.length > 0;
+  for (var q = 0; q < picks.length; q++) {
+    if (state.revealKeptIds.indexOf(picks[q].career.id) === -1) {
+      allKept = false;
+      break;
+    }
+  }
+
+  if (picks.length > 0 && allKept) {
+    var done = document.createElement('p');
+    done.className = 'reveal__done';
+    done.textContent = 'All kept \u2014 you\u2019re set!';
+    actions.appendChild(done);
+  } else if (picks.length > 0) {
+    var shuffleBtn = document.createElement('button');
+    shuffleBtn.type = 'button';
+    shuffleBtn.className = 'reveal__shuffle min-tap';
+    shuffleBtn.textContent = 'Show me different careers \u2192';
+    shuffleBtn.addEventListener('click', function () {
+      var next = state.revealSeenIds.slice();
+      for (var s = 0; s < picks.length; s++) {
+        var id = picks[s].career.id;
+        if (next.indexOf(id) === -1) next.push(id);
+      }
+      state.revealSeenIds = next;
+      refreshReveal();
+      // Mobile: bring the fresh cards into view. refreshReveal renders
+      // synchronously; one rAF makes sure layout is fresh before measuring.
+      if (window.innerWidth < 768) {
+        requestAnimationFrame(function () {
+          var grid = document.querySelector('.career-cards');
+          if (!grid) return;
+          var gridTop = grid.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({
+            top: gridTop - 12,
+            behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+          });
+        });
+      }
+    });
+    actions.appendChild(shuffleBtn);
+  }
+
+  right.appendChild(actions);
+
   var cards = document.createElement('div');
   cards.className = 'career-cards';
   cards.setAttribute('aria-label', 'Suggested career cards');
@@ -1576,9 +1746,15 @@ function renderReveal() {
     none.className = 'body';
     none.textContent = 'We couldn\u2019t find a match yet. Try the quiz again to see new ideas.';
     cards.appendChild(none);
+    var exhausted = document.createElement('p');
+    exhausted.className = 'reveal__exhausted';
+    exhausted.textContent = 'No more new matches \u2014 you\u2019ve seen them all.';
+    cards.appendChild(exhausted);
   } else {
     for (var p = 0; p < picks.length; p++) {
-      cards.appendChild(renderCareerCard(picks[p]));
+      var isKept = state.revealKeptIds.indexOf(picks[p].career.id) !== -1;
+      var isFresh = prevCardIds.indexOf(picks[p].career.id) === -1;
+      cards.appendChild(renderCareerCard(picks[p], isKept, isFresh));
     }
   }
   right.appendChild(cards);
@@ -1594,6 +1770,31 @@ function renderReveal() {
   container.appendChild(renderFooter(phaseToPage('reveal'), true, '\u2190 Back to quiz', goToQuiz));
 
   return container;
+}
+
+// Toggle a career's kept state on the reveal grid, then re-render in place
+function toggleKeep(careerId) {
+  var next = state.revealKeptIds.slice();
+  var idx = next.indexOf(careerId);
+  if (idx === -1) next.push(careerId);
+  else next.splice(idx, 1);
+  state.revealKeptIds = next;
+  refreshReveal();
+}
+
+// Re-render the reveal spread in place. render() never animates on its own
+// (foldNavigate is only used by nav actions), so this preserves the right
+// page's internal scroll and the window scroll across the rebuild.
+function refreshReveal() {
+  var oldRight = document.querySelector('.reveal .zine__page--right');
+  var scrollTop = oldRight ? oldRight.scrollTop : 0;
+  var winY = window.scrollY;
+  render();
+  var newRight = document.querySelector('.reveal .zine__page--right');
+  if (newRight) {
+    newRight.scrollTop = Math.max(0, Math.min(scrollTop, newRight.scrollHeight - newRight.clientHeight));
+  }
+  window.scrollTo(0, winY);
 }
 
 // ─── Placeholder: Workbook ────────────────────────────────────────────────
@@ -1670,7 +1871,10 @@ function goToWelcome() {
       phase: 'welcome',
       quizIndex: 0,
       quizAnswers: {},
-      riasecProfile: null
+      riasecProfile: null,
+      revealKeptIds: [],
+      revealSeenIds: [],
+      revealCardIds: []
       // user is NOT touched — preserved
     });
     render();
@@ -1679,7 +1883,7 @@ function goToWelcome() {
 
 function goToIntro() {
   foldNavigate(function () {
-    setState({ phase: 'intro', quizIndex: 0, quizAnswers: {}, riasecProfile: null });
+    setState({ phase: 'intro', quizIndex: 0, quizAnswers: {}, riasecProfile: null, revealKeptIds: [], revealSeenIds: [], revealCardIds: [] });
     // user is preserved
     render();
   });
@@ -1687,7 +1891,7 @@ function goToIntro() {
 
 function goToQuiz() {
   foldNavigate(function () {
-    setState({ phase: 'quiz', quizIndex: 0, quizAnswers: {}, riasecProfile: null });
+    setState({ phase: 'quiz', quizIndex: 0, quizAnswers: {}, riasecProfile: null, revealKeptIds: [], revealSeenIds: [], revealCardIds: [] });
     render();
   });
 }

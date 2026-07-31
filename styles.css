@@ -2412,6 +2412,337 @@ body {
   outline-offset: 3px;
 }
 
+/* ── Keep & regenerate ── */
+
+/* Whole card is tappable to keep */
+.career-card {
+  cursor: pointer;
+}
+
+/* Kept treatment — a strip of masking tape pinning the card to the page,
+   mirroring the callout/tooltip tape language */
+.career-card--kept::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 18px;
+  width: 48px;
+  height: 18px;
+  z-index: 1;
+  pointer-events: none;
+  background: var(--tape);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: rotate(-3deg);
+  border-radius: 1px;
+}
+
+/* Corner keep stamp — the accessible toggle for keep */
+.career-card__keep {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-black);
+  background: var(--paper);
+  border: 1.5px solid var(--ink-black);
+  transform: rotate(-2deg);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.career-card__keep:hover {
+  color: var(--riso-pink);
+}
+
+.career-card__keep:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* Kept state — filled riso-pink stamp with paper-colored text */
+.career-card--kept .career-card__keep {
+  background: var(--riso-pink);
+  border-color: var(--riso-pink);
+  color: var(--paper);
+}
+
+/* Reveal action bar — helper copy, counter, shuffle */
+.reveal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 1em 0 0;
+}
+
+.reveal__actions-copy {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--stamp-ink);
+}
+
+.reveal__counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-black);
+  background: var(--paper);
+  border: 1.5px solid var(--ink-black);
+  transform: rotate(-1deg);
+}
+
+.reveal__shuffle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 16px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #1A1614;
+  background: var(--riso-blue);
+  border: 1.5px solid #1A1614;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.reveal__shuffle:hover {
+  transform: translateY(-1px);
+}
+
+.reveal__shuffle:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+.reveal__done {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--riso-pink);
+}
+
+.reveal__exhausted {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--stamp-ink);
+}
+
+/* Dark mode — keep stamp, counter, and shuffle button read on dark paper */
+[data-theme="dark"] .career-card__keep {
+  background: #44372A;
+  border-color: #F4ECD8;
+  color: #F4ECD8;
+}
+
+[data-theme="dark"] .career-card--kept .career-card__keep {
+  background: var(--riso-pink);
+  border-color: var(--riso-pink);
+  color: #1A1614;
+}
+
+[data-theme="dark"] .reveal__counter {
+  background: #44372A;
+  border-color: #F4ECD8;
+  color: #F4ECD8;
+}
+
+[data-theme="dark"] .reveal__shuffle {
+  color: #1A1614;
+  border-color: #1A1614;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .reveal__actions-copy,
+[data-theme="dark"] .reveal__exhausted {
+  color: #F4ECD8;
+}
+
+/* ── Stamp-in entrance for freshly shown cards ──
+   Applied to cards whose content changed this render (first reveal visit and
+   every slot a shuffle swaps). The animation's "to" transform matches the
+   base .career-card rotation (-0.5deg) so the card settles without a jump. */
+@keyframes career-card-stamp-in {
+  from {
+    transform: scale(0.92) rotate(-1.2deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1) rotate(-0.5deg);
+    opacity: 1;
+  }
+}
+
+.career-card--fresh {
+  animation: career-card-stamp-in 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .career-card--fresh {
+    animation: none;
+  }
+}
+
+/* ── Desktop compact — the 2×2 grid + action bar fit the right page ──
+   (1440×900, 1280×800 and 1024×768) without internal scrolling. Keeps every
+   44px tap target; only the reveal card is compressed, never the mobile
+   single-column layout. Dark-mode tokens carry over untouched. The right page
+   frame, action bar, and text sizes below were iterated against real
+   measurements so the grid bottom stays above the right page's client bottom
+   at all three viewports. */
+@media (min-width: 768px) {
+  /* Tighter right-page frame — wider cards, less vertical chrome above the grid.
+     Bottom padding stays small so the content fits without internal scrolling. */
+  .reveal .zine__page--right {
+    padding-top: clamp(16px, 2vw, 24px);
+    padding-right: clamp(20px, 3vw, 40px);
+    padding-bottom: 24px;
+    padding-left: clamp(20px, 3vw, 40px);
+  }
+
+  .reveal__actions {
+    margin-top: 8px;
+    gap: 6px 12px;
+  }
+
+  .reveal__actions-copy {
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .reveal__shuffle {
+    font-size: 11px;
+    padding: 8px 12px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .reveal__counter {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .career-cards {
+    margin-top: 10px;
+    gap: 14px;
+  }
+
+  .career-card {
+    padding: 10px 14px 16px;
+  }
+
+  .career-card__name {
+    font-size: clamp(0.82rem, 1.35vw, 1.1rem);
+    line-height: 1.15;
+  }
+
+  .career-card__riasec {
+    margin-top: 6px;
+    gap: 4px;
+  }
+
+  .career-card__riasec .riasec-mark {
+    width: 16px;
+    height: 16px;
+  }
+
+  .career-card__tier {
+    margin-top: 4px;
+  }
+
+  .career-card__tier-stamp {
+    font-size: 9px;
+    padding: 2px 7px;
+  }
+
+  .career-card__about {
+    margin-top: 6px;
+    gap: 2px;
+  }
+
+  .career-card__about-caption,
+  .career-card__daylife-caption {
+    font-size: 9px;
+  }
+
+  .career-card__about-text {
+    font-size: 0.66rem;
+    line-height: 1.25;
+    /* Compact: each blurb line reads as a single teaser line — the cards fit
+       the 2×2 grid at 1024px-wide viewports where the columns get narrow. */
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .career-card__daylife--synthetic {
+    min-height: 52px;
+    padding: 8px 12px 8px;
+    margin-top: 8px;
+    gap: 2px;
+  }
+
+  /* Hide one vignette line for compactness (caption is child 1, lines 2+) */
+  .career-card__daylife-line:nth-child(3) {
+    display: none;
+  }
+
+  .career-card__daylife-line {
+    font-size: 0.66rem;
+    line-height: 1.25;
+    /* Same single-line teaser treatment as the about text */
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .career-card__discover {
+    margin-top: 8px;
+    padding: 8px 4px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 11px;
+  }
+
+  .career-card__keep {
+    font-size: 10px;
+    padding: 4px 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 /* ── Mobile: normal single-column document scroll, no nested scroll trap ── */
 
 @media (max-width: 767px) {
@@ -2426,5 +2757,10 @@ body {
   .career-cards {
     grid-template-columns: 1fr;
     gap: 18px;
+  }
+
+  .reveal__actions {
+    align-items: flex-start;
+    gap: 8px 12px;
   }
 }

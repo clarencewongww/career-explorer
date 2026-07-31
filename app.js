@@ -468,8 +468,9 @@ function pickRevealCareers(profile, excludeIds) {
 function getCurrentTheme() {
   var saved = null;
   try { saved = localStorage.getItem('career-explorer-theme'); } catch (e) { /* localStorage may be blocked */ }
-  if (saved === 'light' || saved === 'dark') return saved;
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  // A saved choice wins; otherwise default to LIGHT (the site's paper look)
+  // regardless of the OS setting. Toggle + persistence unchanged.
+  return saved === 'light' || saved === 'dark' ? saved : 'light';
 }
 
 function applyTheme(theme) {

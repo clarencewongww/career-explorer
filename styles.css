@@ -2795,3 +2795,91 @@ body {
     gap: 8px 12px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   20. Mobile fit — content-driven pages
+   The 50vh page floor + wide page padding forced every stacked page to exceed
+   a mobile viewport, so short phases (intro, collating, quiz items) needed
+   needless scrolling. Pages now size to content and only scroll when their
+   content genuinely overflows. Footer items get compacted so the test-only
+   "Skip quiz" button fits on narrow screens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  .zine__page {
+    min-height: 0;
+    padding: 16px 18px 18px;
+  }
+
+  /* The zine hugs its content instead of stretching to the viewport, so a
+     quiz page has no dead paper between the tally panel and the question. */
+  .zine {
+    min-height: 0;
+    gap: 10px;
+  }
+
+  .journey .zine {
+    flex: 0 1 auto;
+  }
+
+  /* The collating beat is a full-screen moment — it keeps filling the viewport */
+  .zine.collating {
+    min-height: calc(100vh - 32px);
+  }
+
+  .journey .zine.collating {
+    flex: 1;
+  }
+
+  .quiz .callout {
+    margin-bottom: 0.4em;
+  }
+
+  .riasec-tally__heading {
+    margin-top: 0.5em;
+    margin-bottom: 0.3em;
+  }
+
+  .riasec-tally {
+    margin-bottom: 0.6em;
+  }
+
+  .app-footer {
+    gap: 8px;
+    padding: 0 10px;
+  }
+
+  .app-footer__page {
+    font-size: 11px;
+  }
+
+  .app-footer__back,
+  .theme-toggle {
+    padding: 0 6px;
+  }
+
+  /* TEST-ONLY button — compact so it fits next to Back/theme/page on phones */
+  .app-footer__test {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    padding: 0 6px;
+    min-height: 32px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+}
+
+/* ── Welcome email validation error ── */
+
+.welcome__error {
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: var(--riso-pink);
+}
+
+.welcome__input[aria-invalid='true'] {
+  border-color: var(--riso-pink);
+}

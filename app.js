@@ -16,7 +16,8 @@ let state = {
   revealKeptIds: [],
   revealSeenIds: [],
   revealCardIds: [],
-  revealPrevCardIds: null
+  revealPrevCardIds: null,
+  initialType: null
 };
 
 const TOTAL_STEPS = 1 + 1 + (window.QUIZ_ITEMS ? window.QUIZ_ITEMS.length : 0) + 2; // 1 welcome + 1 intro + N quiz + 1 collating/reveal + 1 workbook
@@ -58,6 +59,10 @@ function scoreRiasecProfile(quizAnswers) {
       var opt = item.options[ans];
       if (opt && opt.letter) profile[opt.letter] = (profile[opt.letter] || 0) + 1;
     }
+  }
+  // The intro's initial "best describes you" pick counts toward the profile.
+  if (state.initialType && profile[state.initialType] != null) {
+    profile[state.initialType] += 1;
   }
   return profile;
 }
@@ -704,6 +709,14 @@ function renderWelcome() {
   emailInput.placeholder = 'you@example.com';
   if (state.user.email) emailInput.value = state.user.email;
   emailField.appendChild(emailInput);
+
+  // Email error message — shown only when a non-empty value fails validation
+  var emailError = document.createElement('p');
+  emailError.className = 'welcome__error';
+  emailError.setAttribute('role', 'alert');
+  emailError.textContent = 'Please enter a valid email address, or leave it blank.';
+  emailError.hidden = true;
+  emailField.appendChild(emailError);
   form.appendChild(emailField);
 
   // Submit button
@@ -717,10 +730,26 @@ function renderWelcome() {
     e.preventDefault();
     var name = nameInput.value.trim();
     var email = emailInput.value.trim();
+    // Valid email format, or blank — anything else blocks the form
+    var emailValid = email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!emailValid) {
+      emailInput.setAttribute('aria-invalid', 'true');
+      emailError.hidden = false;
+      emailInput.focus();
+      return;
+    }
+    emailInput.removeAttribute('aria-invalid');
+    emailError.hidden = true;
     foldNavigate(function () {
       setState({ user: { name: name, email: email }, phase: 'intro' });
       render();
     });
+  });
+
+  // Clear the error as soon as the student keeps typing
+  emailInput.addEventListener('input', function () {
+    emailError.hidden = true;
+    emailInput.removeAttribute('aria-invalid');
   });
 
   inner.appendChild(form);
@@ -796,7 +825,13 @@ function renderIntro() {
     btn.type = 'button';
     btn.className = 'intro__mark min-tap';
     btn.setAttribute('aria-label', 'Begin quiz \u2014 ' + rt.name);
-    btn.addEventListener('click', goToQuiz);
+    btn.addEventListener('click', (function (letter) {
+      return function () {
+        // The intro pick counts toward the RIASEC profile (scoreRiasecProfile)
+        setState({ initialType: letter });
+        goToQuiz();
+      };
+    })(rt.letter));
 
     var markSpan = document.createElement('span');
     markSpan.className = 'riasec-mark riasec-mark--' + rt.letter + ' riasec-mark--lg';
@@ -1266,7 +1301,7 @@ function startCollate() {
 
 function renderCollating() {
   var zine = document.createElement('div');
-  zine.className = 'zine';
+  zine.className = 'zine collating';
 
   // ── Left page ──
   var left = document.createElement('div');
@@ -1932,7 +1967,8 @@ function goToWelcome() {
       riasecProfile: null,
       revealKeptIds: [],
       revealSeenIds: [],
-      revealCardIds: [], revealPrevCardIds: null
+      revealCardIds: [], revealPrevCardIds: null,
+      initialType: null
       // user is NOT touched — preserved
     });
     render();
@@ -1973,6 +2009,9 @@ function skipToCollating() {
   var source;
   if (answered < SKIP_MIN_ANSWERS) {
     profile = DEMO_PROFILE;
+    if (state.initialType && profile[state.initialType] != null) {
+      profile[state.initialType] += 1; // the intro pick still counts
+    }
     source = 'demo profile (only ' + answered + ' of 24 answered — too little signal)';
   } else {
     source = 'partial answers (' + answered + ' of 24)';

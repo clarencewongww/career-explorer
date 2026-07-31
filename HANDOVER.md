@@ -2,7 +2,8 @@
 
 > **Last updated:** Sat Aug 01 2026
 > **Skill used:** Impeccable (Risograph Field Zine world) — animate playbook + craft-floor for the collating progress beat. ALWAYS load this skill first in future sessions (see How to resume, step 2).
-> **Status:** Foundation + welcome + 24-item mixed-format quiz + fixed footer + intro greeting + light/dark mode + careers database (1,744 roles) + **reveal build complete** (real matching, career cards with country-agnostic role descriptions + day-in-life vignettes, copy migration, dark-mode card surfaces, desktop split-scroll, smart clip-aware tooltips) + **collating progress animation** (5s stamp-tile beat). Workbook Section 1 is next.
+> **Deployed:** **live on GitHub Pages** → `https://clarencewongww.github.io/career-explorer/` (repo: `github.com/clarencewongww/career-explorer`, public, branch `main` + `.nojekyll`). Push to `main` to redeploy (up to ~10 min to publish).
+> **Status:** Foundation + welcome + 24-item mixed-format quiz + fixed footer + intro greeting + light/dark mode + careers database (1,744 roles) + **reveal build complete** (real matching, career cards with country-agnostic role descriptions + day-in-life vignettes, copy migration, dark-mode card surfaces, desktop split-scroll, smart clip-aware tooltips) + **collating progress animation** (5s stamp-tile beat) + **hosted on GitHub Pages**. Workbook Section 1 is next.
 
 ---
 
@@ -136,11 +137,21 @@ career-explorer/
 ## Open items / known limitations in current build
 
 - **Workbook is a stamped placeholder** (`renderWorkbookPlaceholder`). Next step: real `renderWorkbook()` for Section 1 (Description).
-- **PWA service worker not yet implemented.** `index.html` registers `sw.js` via `navigator.serviceWorker.register('sw.js').catch(()=>{})`, but no `sw.js` exists; the `.catch` swallows the failure (2 console 404s per load). Manifest + icon present; no offline shell.
+- **PWA service worker not yet implemented.** `index.html` registers `sw.js` via `navigator.serviceWorker.register('sw.js').catch(()=>{});` — the only console error on the live site is its 404. No offline shell yet; manifest + icon are live and correct (verified `application/manifest+json`).
 - **Quiz content is demo content** — `quiz-data.js` header clearly labels all items as synthetic; replace before production.
 - **Careers data is raw (id/name/letters only)** — tier, role descriptions, and day-in-life vignettes are deterministic templates computed at render time in `app.js`. Researched per-career copy (real descriptions, resources with careerexplorer.com URLs, real vignettes) is future content work; the PRODUCT.md worked example ("Genetic Counselor / Clinical Psychologist") is the content-template-of-record.
-- **No README** for the project yet.
 - `screenshots/to-review-for-edits.png` is a user-provided reference image, not an artifact; can be deleted once no longer needed.
+
+---
+
+## Deployment (GitHub Pages)
+
+- **Live URL:** `https://clarencewongww.github.io/career-explorer/`
+- **Repo:** `github.com/clarencewongww/career-explorer` (public, required for free-plan Pages)
+- **Publishing source:** branch `main`, root `/` (legacy build), `.nojekyll` at root disables Jekyll per docs.
+- **Redeploy:** push to `main`; Pages auto-builds (up to ~10 min to publish). Screenshots and `.DS_Store` are gitignored.
+- **Verified live:** full quiz → collating → reveal → workbook flow, 4 career cards with `ABOUT THIS ROLE`, manifest `200 application/manifest+json`, Google Fonts load, dark mode. Only console error: `sw.js` 404 (known open item).
+- **PWA note:** `sw.js` will register once added, giving offline support on the live https origin.
 
 ---
 
@@ -172,8 +183,8 @@ Replace `renderWorkbookPlaceholder()` with `renderWorkbook()` for **Section 1: D
 
 1. `TOTAL_STEPS` = 1 + 1 + 24 + 2 = 28 (welcome + intro + 24 quiz + collating/reveal + workbook) — confirmed in app.js.
 2. Ensure `foldNavigate` consistently handles Back navigation (backward page-fold) alongside Forward.
-3. Add `sw.js` — minimal service worker: cache `index.html`, `styles.css`, `app.js`, `quiz-data.js`, `careers-data.js`, `public/manifest.webmanifest`, `public/icon.svg` for offline shell.
-4. Write `README.md` — short project overview, the visual world, how to run (just open `index.html`), how to extend (data files, sections), and planned-but-not-built surfaces (Sections 2–7, saved progress, browse-all-careers).
+3. Add `sw.js` — minimal service worker: cache `index.html`, `styles.css`, `app.js`, `quiz-data.js`, `careers-data.js`, `public/manifest.webmanifest`, `public/icon.svg` for offline shell. Will activate on the live GitHub Pages origin.
+4. ~~Write `README.md`~~ — done (committed with the initial GitHub push; see Deployment section).
 5. Run finishing reviewer per impeccable skill spec §7: critique build against DESIGN.md and shape brief, list material gaps, apply fixes, re-inspect.
 6. Update DESIGN.md with any settled tokens that shifted during the build.
 
@@ -240,4 +251,4 @@ The folder is not committed to git (if/when the project becomes a git repo) sinc
 
 ## One-line state for a quick pickup
 
-"Welcome + 24-item mixed-format quiz + fixed footer + light/dark mode + 1,744-career database (window.CAREERS) + real reveal (matching, up to 4 career cards with country-agnostic role descriptions + day-in-life vignettes, dark-mode surfaces, desktop split-scroll, smart clip-aware tooltips) + 5s collating progress beat all shipped and verified. Workbook Section 1 (Description) is the next build — replace renderWorkbookPlaceholder. Load the impeccable skill before any UI work."
+"Welcome + 24-item mixed-format quiz + fixed footer + light/dark mode + 1,744-career database (window.CAREERS) + real reveal (matching, up to 4 career cards with country-agnostic role descriptions + day-in-life vignettes, dark-mode surfaces, desktop split-scroll, smart clip-aware tooltips) + 5s collating progress beat all shipped, verified, and **live on GitHub Pages** (clarencewongww.github.io/career-explorer). Workbook Section 1 (Description) is the next build — replace renderWorkbookPlaceholder. Load the impeccable skill before any UI work."

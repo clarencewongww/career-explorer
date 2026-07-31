@@ -16,6 +16,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overscroll-behavior-y: contain; /* no rubber-band past the page edges */
 }
 
 body {
@@ -1315,13 +1316,12 @@ p + p {
    chosen in JS (attachTypeTooltip) via three modes: right of the row
    (default), flipped left (--flip), or below the row (--below). */
 
-/* Hidden tooltips are absolutely positioned off the right of their row; clip
-   the document horizontally so invisible ghosts never add a horizontal scroll
-   bar. Visible tooltips are always placed inside the viewport by JS. */
-html,
-body {
-  overflow-x: clip;
-}
+/* Hidden tooltips are absolutely positioned off the right of their row; the
+   .journey wrapper clips them horizontally so invisible ghosts never add a
+   horizontal scroll bar. Scoping the clip to .journey (NOT html/body) keeps
+   the document's vertical scrolling intact — overflow-x: clip on html/body
+   breaks vertical scroll + rubber-band on iOS Safari. Visible tooltips are
+   always placed inside the viewport by JS, so they are never cut. */
 
 .type-tooltip {
   position: absolute;
@@ -1892,6 +1892,9 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   padding-bottom: 0;
+  /* Clips hidden tooltip ghosts horizontally WITHOUT touching the document
+     scroller (overflow-x on html/body breaks vertical scroll on iOS) */
+  overflow-x: clip;
 }
 
 .journey .zine {

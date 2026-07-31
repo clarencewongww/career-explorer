@@ -193,6 +193,17 @@ function attachTypeTooltip(row, tooltip) {
       hide();
     }
   });
+  // A mouse click on the row toggles too (trackpad/mouse users "tap" with
+  // clicks — touchstart never fires for them). Synthesized clicks that follow
+  // a real touch gesture are ignored so the touchstart toggle isn't doubled.
+  row.addEventListener('click', function () {
+    if (Date.now() - lastTouchAt < 600) return;
+    if (tooltip.getAttribute('aria-hidden') === 'false') {
+      hide();
+    } else {
+      show();
+    }
+  });
   // Pressing the open tooltip itself closes it (and never toggles the row
   // beneath it, thanks to stopPropagation). Hidden tooltips keep
   // pointer-events: none so they never intercept anything.

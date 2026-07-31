@@ -1,0 +1,19 @@
+{
+  "name": "Career Explorer",
+  "short_name": "Careers",
+  "description": "Take a guided quiz, see careers you'd fit, then explore one in depth with a workbook.",
+  "start_url": "../index.html",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#F4ECD8",
+  "theme_color": "#F4ECD8",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

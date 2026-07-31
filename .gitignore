@@ -1,0 +1,5 @@
+# Test artifacts — not source
+screenshots/
+
+# macOS
+.DS_Store

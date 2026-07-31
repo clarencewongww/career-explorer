@@ -1,0 +1,2430 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Career Explorer — Risograph Field Zine
+   Complete foundation stylesheet
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 0. Reset & base ─── */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  padding-bottom: 40px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-black);
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 15% 30%, rgba(201, 185, 153, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 70%, rgba(201, 185, 153, 0.05) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(201, 185, 153, 0.08) 31px, rgba(201, 185, 153, 0.08) 32px);
+  background-attachment: fixed;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* Focus-visible: thick pink outline for keyboard users */
+:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── :root tokens ─── */
+
+:root {
+  /* Color tokens (from DESIGN.md) */
+  --paper: #F4ECD8;
+  --paper-deep: #E8DDC4;
+  --paper-shadow: #D9CCB2;
+  --ink-black: #1A1614;
+  --riso-pink: #FF4D7D;
+  --riso-blue: #1FA8FF;
+  --riso-yellow: #FFD93D;
+  --rule-line: #C9B999;
+  --stamp-ink: rgba(26, 22, 20, 0.78);
+  --tape: rgba(255, 217, 61, 0.55);
+
+  /* Motion tokens */
+  --fold-duration: 420ms;
+  --fold-easing: cubic-bezier(0.2, 0.7, 0.15, 1);
+  --reduced-fold-duration: 0ms;
+
+  /* Type tokens */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Spectral', Georgia, serif;
+  --body-measure: 65ch;
+
+  /* Layout tokens */
+  --gutter: 16px;
+}
+
+/* Dark mode — warm dark ground, riso inks glow */
+[data-theme="dark"] {
+  --paper: #1A1614;
+  --paper-deep: #252019;
+  --paper-shadow: #3A332B;
+  --ink-black: #F4ECD8;
+  --rule-line: #8A7F6A;
+  --stamp-ink: rgba(244, 236, 216, 0.85);
+  --tape: rgba(255, 217, 61, 0.45);
+  /* Riso inks stay the same — they glow on dark backgrounds */
+}
+
+/* Dark mode — component-level overrides for things the token swap doesn't cover */
+[data-theme="dark"] .callout {
+  background: #3A332B;
+  color: var(--ink-black);
+}
+[data-theme="dark"] .callout h4 {
+  color: var(--ink-black);
+}
+[data-theme="dark"] .callout a {
+  color: var(--riso-pink);
+}
+/* Yellow stamp needs dark text on yellow in both modes (fluorescent + light = unreadable) */
+[data-theme="dark"] .section-label--yellow {
+  color: #1A1614;
+}
+/* Halftone blend mode: multiply darkens (good on light), screen lightens (good on dark) */
+[data-theme="dark"] .halftone::before {
+  mix-blend-mode: screen;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fold-duration: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  ::view-transition-old(spread),
+  ::view-transition-new(spread) {
+    animation-duration: 0ms !important;
+  }
+}
+
+/* ─── 1. Halftone texture classes ─── */
+
+.halftone {
+  position: relative;
+}
+
+.halftone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(26, 22, 20, 0.35) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(26, 22, 20, 0.25) 1px, transparent 1px);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+  background-repeat: repeat;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* Ink color variants */
+.halftone--pink::before {
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(255, 77, 125, 0.55) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(255, 77, 125, 0.4) 1px, transparent 1px);
+}
+
+.halftone--blue::before {
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(31, 168, 255, 0.55) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(31, 168, 255, 0.4) 1px, transparent 1px);
+}
+
+.halftone--yellow::before {
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(255, 217, 61, 0.7) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(255, 217, 61, 0.55) 1px, transparent 1px);
+}
+
+/* Density modifiers */
+.halftone--dense::before {
+  background-size: 8px 8px;
+  background-position: 0 0, 4px 4px;
+}
+
+.halftone--soft::before {
+  background-size: 18px 18px;
+  background-position: 0 0, 9px 9px;
+}
+
+/* Dot size scales down on small screens */
+@media (max-width: 479px) {
+  .halftone::before {
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+  }
+
+  .halftone--dense::before {
+    background-size: 6px 6px;
+    background-position: 0 0, 3px 3px;
+  }
+
+  .halftone--soft::before {
+    background-size: 14px 14px;
+    background-position: 0 0, 7px 7px;
+  }
+}
+
+/* ─── 2. Zine spread layout ─── */
+
+.zine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--gutter) minmax(0, 1fr);
+  min-height: calc(100vh - 32px);
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  view-transition-name: spread;
+}
+
+.zine__page {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(20px, 4vw, 48px);
+  background: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(201, 185, 153, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 70%, rgba(201, 185, 153, 0.04) 0%, transparent 60%);
+  min-height: 50vh;
+  box-shadow:
+    0 1px 0 var(--paper-shadow),
+    0 2px 6px rgba(60, 50, 30, 0.05);
+}
+
+.zine__page--left {
+  /* Name reserved for clarity — no visual difference from --right on mobile */
+}
+
+.zine__page--right {
+  /* Name reserved for clarity */
+}
+
+/* Gutter / spine — visible on desktop */
+.zine__gutter {
+  width: 1px;
+  justify-self: center;
+  background: var(--paper-shadow);
+  box-shadow:
+    -4px 0 6px -4px var(--paper-shadow),
+    4px 0 6px -4px var(--paper-shadow);
+}
+
+/* Desktop: pages fill the spread height */
+@media (min-width: 768px) {
+  .zine__page {
+    aspect-ratio: 1.41 / 1;
+    min-height: auto;
+    height: fit-content;
+    align-self: start;
+  }
+
+  .zine__page--left {
+    grid-column: 1;
+  }
+
+  .zine__gutter {
+    grid-column: 2;
+  }
+
+  .zine__page--right {
+    grid-column: 3;
+  }
+}
+
+/* Mobile: single column, pages stack */
+@media (max-width: 767px) {
+  .zine {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: var(--gutter);
+    max-width: 600px;
+  }
+
+  .zine__page--left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .zine__gutter {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    height: 0;
+    border-top: 2px dashed var(--paper-shadow);
+    background: none;
+    box-shadow: none;
+  }
+
+  .zine__page--right {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  /* Compress RIASEC marks on mobile to reduce scroll height */
+  .intro__marks {
+    gap: 6px;
+  }
+  .intro__mark {
+    padding: 6px 10px;
+  }
+}
+
+/* ─── 3. Section label band (stamp) ─── */
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--stamp-ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  transform: rotate(-1.5deg);
+  width: -moz-fit-content;
+  width: fit-content;
+  box-shadow: 0 0 0 1px rgba(26,22,20,0.15);
+  text-shadow: 0.5px 0.5px 0 rgba(26,22,20,0.15);
+}
+
+.section-label--pink {
+  background: var(--riso-pink);
+  color: var(--paper);
+}
+
+.section-label--blue {
+  background: var(--riso-blue);
+  color: var(--paper);
+}
+
+.section-label--yellow {
+  background: var(--riso-yellow);
+  color: var(--ink-black);
+}
+
+/* ─── 4. RIASEC marks ─── */
+
+.riasec-mark {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background-color: var(--mark-color, var(--ink-black));
+  -webkit-mask: var(--mark-shape) center / contain no-repeat;
+  mask: var(--mark-shape) center / contain no-repeat;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  flex-shrink: 0;
+}
+
+/* Realistic — hashed square, riso-blue */
+.riasec-mark--R {
+  --mark-color: var(--riso-blue);
+  --mark-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='3' y='3' width='16' height='16' fill='white' stroke='white' stroke-width='1.5'/%3E%3Cline x1='3' y1='9' x2='19' y2='9' stroke='white' stroke-width='1'/%3E%3Cline x1='3' y1='15' x2='19' y2='15' stroke='white' stroke-width='1'/%3E%3Cline x1='9' y1='3' x2='9' y2='19' stroke='white' stroke-width='1'/%3E%3Cline x1='15' y1='3' x2='15' y2='19' stroke='white' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* Investigative — dotted diamond, riso-pink */
+.riasec-mark--I {
+  --mark-color: var(--riso-pink);
+  --mark-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpolygon points='11,2 20,11 11,20 2,11' fill='none' stroke='white' stroke-width='1.5' stroke-dasharray='2.5,2.5'/%3E%3C/svg%3E");
+}
+
+/* Artistic — star/asterisk, riso-yellow with ink-black outline */
+.riasec-mark--A {
+  --mark-color: var(--riso-yellow);
+  --mark-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M11 2 L12.5 9.5 L20 11 L12.5 12.5 L11 20 L9.5 12.5 L2 11 L9.5 9.5 Z' fill='white'/%3E%3C/svg%3E");
+  filter: drop-shadow(0 0 0.8px var(--ink-black));
+}
+
+/* Social — hollow circle, riso-pink */
+.riasec-mark--S {
+  --mark-color: var(--riso-pink);
+  --mark-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8' fill='none' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+/* Enterprising — double chevron, riso-blue */
+.riasec-mark--E {
+  --mark-color: var(--riso-blue);
+  --mark-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpolyline points='5,5 11,11 5,17' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='11,5 17,11 11,17' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Conventional — checked square, ink-black */
+.riasec-mark--C {
+  --mark-color: var(--ink-black);
+  --mark-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='3' y='3' width='16' height='16' fill='none' stroke='white' stroke-width='1.5'/%3E%3Cpolyline points='6,11 10,15 16,7' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Large variant for hero / intro use */
+.riasec-mark--lg {
+  width: clamp(32px, 4vw, 44px);
+  height: clamp(32px, 4vw, 44px);
+}
+
+/* ─── 5. Headlines (display typography) ─── */
+
+.display-1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.5rem, 6vw, 5.5rem);
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  color: var(--ink-black);
+  display: block;
+  max-width: 100%;
+}
+
+.display-2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+  color: var(--ink-black);
+}
+
+.display-3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.4rem, 2.8vw, 2.4rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink-black);
+}
+
+/* Headline accent word */
+.headline__accent {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--riso-pink);
+}
+
+/* ─── 6. Body and supporting type ─── */
+
+.body-lg {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  max-width: var(--body-measure);
+}
+
+.body {
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: var(--body-measure);
+}
+
+.body-sm {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.italic {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Heading rhythm */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--ink-black);
+}
+
+h1, h2, h3 {
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+h4, h5, h6 {
+  margin-top: 0.8em;
+  margin-bottom: 0.3em;
+}
+
+h1 + h2,
+h1 + p,
+h2 + p,
+h3 + p,
+h2 + h3 {
+  margin-top: 0.4em;
+}
+
+p + p {
+  margin-top: 0.6em;
+}
+
+/* ─── 7. Resource / sticky-note callout ─── */
+
+.callout {
+  position: relative;
+  background: #FFF8D6;
+  padding: 14px 18px;
+  max-width: 420px;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(60, 50, 30, 0.15);
+  transform: rotate(-1deg);
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.callout h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-top: 0;
+  margin-bottom: 0.4em;
+}
+
+.callout ul {
+  list-style: none;
+  padding: 0;
+}
+
+.callout ul li + li {
+  margin-top: 0.3em;
+}
+
+.callout a {
+  color: var(--riso-pink);
+  text-decoration: none;
+}
+
+.callout a:hover {
+  text-decoration: underline;
+}
+
+/* Tape strip at top of callout */
+.callout::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 14px;
+  width: 46px;
+  height: 16px;
+  background: var(--tape);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: rotate(-3deg);
+  border-radius: 1px;
+}
+
+/* ─── 8. Ruled line input ─── */
+
+.ruled-input {
+  display: block;
+  width: 100%;
+  background: transparent;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 29px,
+    var(--rule-line) 29px,
+    var(--rule-line) 30px
+  );
+  background-attachment: local;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 0 0 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 30px;
+  min-height: 90px;
+  resize: vertical;
+  color: var(--ink-black);
+  outline: none;
+}
+
+.ruled-input:focus {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.ruled-input::placeholder {
+  color: var(--rule-line);
+  font-style: italic;
+}
+
+/* ─── 9. Masking tape ─── */
+
+.tape {
+  display: inline-block;
+  width: 48px;
+  height: 18px;
+  background: var(--tape);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border-radius: 1px;
+}
+
+.tape--1 { transform: rotate(-3deg); }
+.tape--2 { transform: rotate(-1deg); }
+.tape--3 { transform: rotate(1deg); }
+.tape--4 { transform: rotate(2deg); }
+
+/* ─── 10. Page-fold transition ─── */
+
+.zine {
+  view-transition-name: spread;
+}
+
+/* Keyframes */
+@keyframes page-fold-out {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    transform: perspective(1200px) rotateY(-90deg) translateZ(-200px);
+    opacity: 0;
+  }
+}
+
+@keyframes page-fold-in {
+  0% {
+    transform: perspective(1200px) rotateY(90deg) translateZ(-200px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* View Transition API overrides */
+::view-transition-old(spread) {
+  animation: page-fold-out var(--fold-duration) var(--fold-easing) both;
+  transform-origin: 0% 50%;
+  backface-visibility: hidden;
+}
+
+::view-transition-new(spread) {
+  animation: page-fold-in var(--fold-duration) var(--fold-easing) both;
+  transform-origin: 0% 50%;
+  backface-visibility: hidden;
+}
+
+/* Fallback for browsers without View Transitions API support */
+.fold-fallback {
+  transition: opacity 180ms ease-out;
+}
+
+.fold-fallback.fold-fallback--out {
+  opacity: 0;
+}
+
+.fold-fallback.fold-fallback--in {
+  opacity: 1;
+}
+
+/* ─── 11. Career plate ─── */
+
+.career-plate {
+  background: var(--paper-deep);
+  padding: 18px 22px;
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    100% calc(100% - 22px),
+    calc(100% - 22px) 100%,
+    0% 100%
+  );
+  transform: rotate(-0.5deg);
+  margin-bottom: 1em;
+}
+
+.career-plate__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink-black);
+}
+
+.career-plate__riasec {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.career-plate__tier {
+  display: inline-flex;
+  margin-top: 8px;
+}
+
+.career-plate__daylife {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  margin-top: 12px;
+  background: var(--paper-deep);
+}
+
+.career-plate__daylife img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.career-plate__daylife .halftone--blue::before {
+  z-index: 2;
+}
+
+.career-plate__open {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 4px;
+  min-width: 44px;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--ink-black);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 180ms ease, color 180ms ease;
+  margin-top: 12px;
+}
+
+.career-plate__open:hover {
+  transform: translateX(2px);
+  color: var(--riso-pink);
+}
+
+.career-plate__open:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* ─── 11b. Reveal spread ─── */
+
+/* Left page — "your type" context column */
+.reveal .zine__page--left {
+  justify-content: flex-start;
+}
+
+.reveal .display-2 {
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+}
+
+.reveal__marks-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 0.8em;
+  margin-bottom: 0.5em;
+  color: var(--ink-black);
+}
+
+/* Top marks — ink-coded rows with paper backing, like the intro RIASEC buttons */
+.reveal__topmarks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1.2em;
+}
+
+.reveal__topmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  width: -moz-fit-content;
+  width: fit-content;
+  background: var(--paper);
+  border: 1.5px solid var(--paper-shadow);
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(60, 50, 30, 0.08);
+  position: relative;
+  cursor: help;
+}
+
+.reveal__topmark:nth-child(odd)  { transform: rotate(-0.6deg); }
+.reveal__topmark:nth-child(even) { transform: rotate(0.6deg); }
+
+.reveal__topmark-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.reveal__topmark-rank {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+}
+
+.reveal__topmark-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-black);
+}
+
+/* Right page — career plates grid (2×2 on spread, 1-col when collapsed) */
+.career-plates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 14px;
+  align-content: start;
+  margin-top: 1em;
+  width: 100%;
+}
+
+.career-plate {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+/* Tier stamp colors — descriptive fit labels, not ranks */
+.career-plate__tier-stamp {
+  transform: rotate(-1deg);
+}
+
+.career-plate__tier--strong {
+  background: var(--riso-blue);
+  color: var(--paper);
+}
+
+.career-plate__tier--good {
+  background: var(--riso-pink);
+  color: var(--paper);
+}
+
+.career-plate__tier--adjacent {
+  background: var(--stamp-ink);
+  color: var(--paper);
+}
+
+/*
+ * Reveal-specific fluorescent stamp contrast.
+ * On light paper the riso inks are bright, so cream (--paper) text on them is
+ * unreadable (~2.2:1 / ~2.7:1). Use the dark ink instead: #1A1614 on riso-blue
+ * is ~6.9:1 and on riso-pink ~5.7:1. In dark mode --paper is already #1A1614,
+ * so the same dark ink stays theme-safe there too. Scoped to .reveal so the
+ * global .section-label styles elsewhere are untouched.
+ */
+.reveal .career-plate__tier--strong,
+.reveal .career-plate__tier--good,
+.reveal .section-label--blue {
+  color: #1A1614;
+}
+
+/* Synthetic day-in-life vignette — halftone dots + ink fade, no external images */
+.career-plate__daylife--synthetic {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 5px;
+  padding: 12px 12px 10px;
+  border: 1.5px solid var(--paper-shadow);
+  aspect-ratio: 16 / 7;
+}
+
+/* Halftone dot screen over the block, multiply on light / screen on dark via token */
+.career-plate__daylife--synthetic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(26, 22, 20, 0.22) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(26, 22, 20, 0.16) 1px, transparent 1px);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+  mix-blend-mode: multiply;
+}
+
+/* Paper-colored fade toward the bottom keeps the vignette text readable */
+.career-plate__daylife--synthetic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 30%, var(--paper-deep) 100%);
+}
+
+.career-plate__daylife-caption,
+.career-plate__daylife-line {
+  position: relative;
+  z-index: 2;
+}
+
+.career-plate__daylife-caption {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+}
+
+.career-plate__daylife-line {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-black);
+  max-width: 44ch;
+}
+
+/* Dark mode — dots lighten instead of darken, matching the existing halftone rule */
+[data-theme="dark"] .career-plate__daylife--synthetic::before {
+  mix-blend-mode: screen;
+}
+
+/* Mobile — single-column plates, full-bleed top marks */
+@media (max-width: 767px) {
+  .career-plates {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 479px) {
+  .reveal__topmark {
+    width: 100%;
+  }
+
+  .career-plate__daylife--synthetic {
+    aspect-ratio: auto;
+    min-height: 108px;
+  }
+}
+
+/* ─── 12. Quiz item layout ─── */
+
+/* Likert scale */
+.quiz-likert {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.2em;
+}
+
+.quiz-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--paper-shadow);
+  border-radius: 3px;
+  background: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink-black);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  position: relative;
+}
+
+.quiz-option:hover {
+  border-color: var(--riso-pink);
+}
+
+.quiz-option--selected {
+  background: var(--riso-pink);
+  border-color: var(--riso-pink);
+  color: var(--paper);
+}
+
+.quiz-option--selected::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--paper);
+  opacity: 0.7;
+}
+
+.quiz-option__number {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.quiz-option__label {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-top: 2px;
+  line-height: 1.15;
+}
+
+/* Scenario-style options */
+.quiz-scenario {
+  margin-top: 1.2em;
+}
+
+.quiz-scenario__text {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  max-width: var(--body-measure);
+  margin-bottom: 1em;
+}
+
+.quiz-option--scenario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid var(--paper-shadow);
+  border-radius: 3px;
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  text-align: left;
+  color: var(--ink-black);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+  margin-bottom: 6px;
+}
+
+.quiz-option--scenario:hover {
+  border-color: var(--riso-pink);
+}
+
+.quiz-option--scenario.quiz-option--selected {
+  background: var(--riso-pink);
+  border-color: var(--riso-pink);
+  color: var(--paper);
+}
+
+.quiz-option--scenario .riasec-mark {
+  opacity: 0.5;
+}
+
+.quiz-option--scenario.quiz-option--selected .riasec-mark {
+  opacity: 1;
+  --mark-color: var(--paper);
+}
+
+/* Card-sort */
+.quiz-cardsort {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 1.2em;
+}
+
+.quiz-cardsort__card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  min-height: 120px;
+  background: var(--paper-deep);
+  border: 2px solid var(--paper-shadow);
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  text-align: center;
+  color: var(--ink-black);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+  position: relative;
+}
+
+.quiz-cardsort__card:first-child {
+  transform: rotate(-2deg);
+}
+
+.quiz-cardsort__card:last-child {
+  transform: rotate(1.6deg);
+}
+
+.quiz-cardsort__card:hover {
+  border-color: var(--riso-pink);
+}
+
+.quiz-cardsort__card--selected {
+  background: var(--riso-pink);
+  border-color: var(--riso-pink);
+  color: var(--paper);
+}
+
+.quiz-cardsort__card--unselected {
+  opacity: 0.65;
+}
+
+/* ─── 12b. Progress strip — 12-cell item tracker ─── */
+
+.progress-strip {
+  display: flex;
+  gap: 3px;
+  margin-top: 0.5em;
+  margin-bottom: 1.2em;
+  flex-wrap: wrap;
+}
+
+.progress-strip__cell {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--paper-shadow);
+  border-radius: 2px;
+  background: transparent;
+}
+
+.progress-strip__cell--done {
+  background: var(--riso-pink);
+  border-color: var(--riso-pink);
+}
+
+.progress-strip__cell--current {
+  background: var(--paper);
+  border-color: var(--ink-black);
+  border-width: 2px;
+}
+
+/* ─── 12b′. Collating progress — RIASEC stamp tiles ───
+   The collating beat's authored moment: six ink tiles stamp in one by one
+   (scale press + ink fill) while a percentage ticks and captions rotate,
+   then the spread folds to the reveal. Reduced motion: static fill, no
+   transitions (JS skips the ticker entirely). */
+
+.collate-progress {
+  margin-top: 1.6em;
+  max-width: 340px;
+}
+
+.collate-progress__tiles {
+  display: flex;
+  gap: 10px;
+  width: fit-content;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--paper-shadow);
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(60, 50, 30, 0.08);
+  transform: rotate(-0.5deg);
+}
+
+.collate-progress__tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(30px, 4vw, 42px);
+  height: clamp(30px, 4vw, 42px);
+  border: 2px solid var(--ink-black);
+  border-radius: 3px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: transparent;
+  transform: scale(0.55) rotate(-10deg);
+  opacity: 0.25;
+  transition:
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 260ms ease-out,
+    background-color 260ms ease-out,
+    color 260ms ease-out;
+}
+
+.collate-progress__tile--done {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+}
+
+.collate-progress__tile--done.collate-progress__tile--r,
+.collate-progress__tile--done.collate-progress__tile--e {
+  background: var(--riso-blue);
+  color: var(--paper);
+}
+
+.collate-progress__tile--done.collate-progress__tile--i,
+.collate-progress__tile--done.collate-progress__tile--s {
+  background: var(--riso-pink);
+  color: var(--paper);
+}
+
+.collate-progress__tile--done.collate-progress__tile--a {
+  background: var(--riso-yellow);
+  color: var(--ink-black);
+}
+
+.collate-progress__tile--done.collate-progress__tile--c {
+  background: var(--ink-black);
+  color: var(--paper);
+}
+
+.collate-progress__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.collate-progress__pct {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--riso-pink);
+  font-variant-numeric: tabular-nums;
+}
+
+.collate-progress__caption {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink-black);
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collate-progress__tile {
+    transition: none;
+  }
+}
+
+/* ─── 12c. RIASEC tally — running count of answers ─── */
+
+.riasec-tally__heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 0.8em;
+  margin-bottom: 0.4em;
+}
+
+.riasec-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin-bottom: 1em;
+}
+
+.riasec-tally__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 60px;
+  position: relative;
+  cursor: help;
+  outline: none; /* keep focus visible via the page-wide pink outline */
+}
+
+.riasec-tally__count {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .riasec-tally {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px 8px;
+  }
+
+  .riasec-tally__row {
+    min-width: 0;
+  }
+}
+
+/* Shared type tooltip — used by the quiz RIASEC tally rows and the reveal
+   top-3 marks. Paper + ink border + tape strip, zine-style. Placement is
+   chosen in JS (attachTypeTooltip) via three modes: right of the row
+   (default), flipped left (--flip), or below the row (--below). */
+
+/* Hidden tooltips are absolutely positioned off the right of their row; clip
+   the document horizontally so invisible ghosts never add a horizontal scroll
+   bar. Visible tooltips are always placed inside the viewport by JS. */
+html,
+body {
+  overflow-x: clip;
+}
+
+.type-tooltip {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translate(0, -50%) scale(0.95);
+  transform-origin: left center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 160px;
+  max-width: 220px;
+  padding: 14px 14px 12px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink-black);
+  border-radius: 3px;
+  box-shadow: 0 4px 14px rgba(60, 50, 30, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out, transform 180ms cubic-bezier(0.2, 0.7, 0.15, 1);
+  z-index: 10;
+}
+
+/* Flipped to the left of the row when the right side would overflow */
+.type-tooltip--flip {
+  left: auto;
+  right: calc(100% + 14px);
+  transform: translate(0, -50%) scale(0.95);
+  transform-origin: right center;
+}
+
+/* Below the row when both sides would overflow (full-width rows on mobile) */
+.type-tooltip--below {
+  left: 0;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 0;
+  max-width: none;
+  transform: translateY(4px) scale(0.98);
+  transform-origin: top center;
+}
+
+/* Above the row when there is no room below (row near the bottom edge) */
+.type-tooltip--above {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: calc(100% + 10px);
+  min-width: 0;
+  max-width: none;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: bottom center;
+}
+
+.riasec-tally__row:hover .type-tooltip,
+.riasec-tally__row:focus-visible .type-tooltip,
+.riasec-tally__row:focus .type-tooltip,
+.reveal__topmark:hover .type-tooltip,
+.reveal__topmark:focus-visible .type-tooltip,
+.reveal__topmark:focus .type-tooltip {
+  opacity: 1;
+  transform: translate(0, -50%) scale(1);
+}
+
+/* pointer-events stays none even when shown — the tooltip is informational
+   only, so taps pass through to the content underneath */
+
+.riasec-tally__row:hover .type-tooltip--below,
+.riasec-tally__row:focus-visible .type-tooltip--below,
+.riasec-tally__row:focus .type-tooltip--below,
+.reveal__topmark:hover .type-tooltip--below,
+.reveal__topmark:focus-visible .type-tooltip--below,
+.reveal__topmark:focus .type-tooltip--below,
+.riasec-tally__row:hover .type-tooltip--above,
+.riasec-tally__row:focus-visible .type-tooltip--above,
+.riasec-tally__row:focus .type-tooltip--above,
+.reveal__topmark:hover .type-tooltip--above,
+.reveal__topmark:focus-visible .type-tooltip--above,
+.reveal__topmark:focus .type-tooltip--above {
+  transform: translateY(0) scale(1);
+}
+
+/* A small tape strip on the side of the tooltip, matching the callout treatment */
+.type-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -7px;
+  transform: translate(0, -50%) rotate(45deg);
+  width: 38px;
+  height: 14px;
+  background: var(--tape);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+  border-radius: 1px;
+}
+
+.type-tooltip--flip::before {
+  left: auto;
+  right: -7px;
+}
+
+.type-tooltip--below::before {
+  top: -7px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) rotate(0deg);
+}
+
+.type-tooltip--above::before {
+  top: auto;
+  bottom: -7px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) rotate(0deg);
+}
+
+.type-tooltip__name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-black);
+  line-height: 1.2;
+}
+
+.type-tooltip__desc {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink-black);
+  max-width: 100%;
+}
+
+/* On mobile, shrink the tooltip so it fits the portrait spread */
+@media (max-width: 767px) {
+  .type-tooltip {
+    min-width: 140px;
+    max-width: 180px;
+    font-size: 11px;
+  }
+
+  .type-tooltip--below {
+    max-width: none;
+  }
+}
+
+/* ─── 12d. Scenario helper subtitle ─── */
+
+.quiz-scenario__helper {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+  margin-bottom: 0.8em;
+}
+
+@media (max-width: 479px) {
+  .quiz-cardsort {
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-option {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .quiz-likert {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
+/* ─── 13. Workbook prompt block ─── */
+
+.workbook-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 0.8em;
+  margin-bottom: 1.2em;
+}
+
+.workbook-prompt {
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: var(--body-measure);
+}
+
+/* ─── 14. Guided dialogue ─── */
+
+.guided-dialogue {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.guided-dialogue__assistant {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.5;
+  padding-left: 14px;
+  border-left: 2px solid var(--riso-pink);
+  color: var(--ink-black);
+}
+
+.guided-dialogue__prompt {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-style: italic;
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--ink-black);
+  padding-left: 14px;
+}
+
+/* ─── 15. Intro spread ─── */
+
+.intro {
+  /* Intentionally empty — .intro is a modifier on .zine; the grid layout must persist.
+     Child-targeting rules below handle centering etc. */
+}
+
+/* Intro right page — softer halftone so the marks read clearly */
+.intro .zine__page--right.halftone--blue::before {
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(31, 168, 255, 0.3) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(31, 168, 255, 0.2) 1px, transparent 1px);
+}
+
+/* Quiz left page — softer pink halftone so the content reads clearly */
+.zine__page--left.halftone--pink::before {
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(255, 77, 125, 0.3) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(255, 77, 125, 0.2) 1px, transparent 1px);
+}
+
+.intro .zine__page--left {
+  aspect-ratio: auto;
+  height: auto;
+  justify-content: flex-start;
+  position: relative;
+  overflow: hidden;
+  padding-top: clamp(72px, 10vw, 112px); /* room for the absolutely-positioned greeting */
+  align-self: stretch;
+}
+
+.intro .zine__page--right {
+  aspect-ratio: auto;
+  height: auto;
+  justify-content: center;
+  align-items: stretch;
+  align-self: stretch;
+}
+
+/* Intro left page element spacing — prevents overlap at large viewports */
+.intro .zine__page--left .display-1 {
+  margin-top: 0.8em;
+  margin-bottom: 0;
+}
+.intro .zine__page--left .body-lg {
+  margin-top: 0.6em;
+  margin-bottom: 1em;
+}
+.intro .zine__page--left .body-sm {
+  margin-top: 0;
+  margin-bottom: 1.5em;
+}
+.intro .zine__page--left .callout {
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+.intro .callout {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  max-width: min(420px, calc(100% - 2 * clamp(20px, 4vw, 48px)));
+  margin-top: 0;
+  margin-bottom: 0;
+  z-index: 2;
+  align-self: flex-start;
+}
+
+/* Decorative halftone disk behind the headline */
+.halftone-band {
+  position: absolute;
+  top: 15%;
+  right: -8%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  opacity: 0.35;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ensure headline and stamp sit above halftone band */
+.intro .section-label,
+.intro .display-1,
+.intro .body-sm {
+  position: relative;
+  z-index: 1;
+}
+
+.intro__marks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 1.2em;
+}
+
+.intro__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 56px;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--paper);  /* CHANGED from transparent */
+  border: 2px solid var(--paper-shadow);
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(60, 50, 30, 0.08);  /* NEW — subtle lift */
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  text-align: left;
+  color: var(--ink-black);
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.intro__mark:hover {
+  transform: translateY(-1px);
+  border-color: var(--riso-pink);
+  box-shadow: 0 2px 0 var(--paper-shadow);
+}
+
+.intro__mark:active {
+  transform: translateY(0);
+}
+
+.intro__mark-label {
+  display: flex;
+  flex-direction: column;
+}
+
+.intro__mark-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.intro__mark-desc {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-black);
+  opacity: 0.7;
+}
+
+/* ─── 15a. Intro greeting ─── */
+
+.intro__greeting {
+  position: absolute;
+  top: clamp(20px, 4vw, 48px);
+  left: clamp(20px, 4vw, 48px);
+  right: clamp(20px, 4vw, 48px);
+  z-index: 2;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  color: var(--riso-pink);
+  margin: 0;
+  max-width: 24ch;
+}
+
+/* ─── 15c. Welcome page ─── */
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px) 24px;
+}
+
+.welcome__inner {
+  background: var(--paper);
+  padding: clamp(28px, 5vw, 56px);
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome__lede {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin-top: 1em;
+  margin-bottom: 1.6em;
+}
+
+.welcome__lede .display-1 {
+  margin-top: 0.2em;
+}
+
+.welcome__lede .body-lg {
+  margin-top: 0.4em;
+  max-width: 36ch;
+}
+
+.welcome__form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 1em;
+}
+
+.welcome__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.welcome__label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-black);
+}
+
+.welcome__hint {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-black);
+  opacity: 0.6;
+  margin-left: 6px;
+}
+
+.welcome__input {
+  display: block;
+  width: 100%;
+  background: transparent;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 29px,
+    var(--rule-line) 29px,
+    var(--rule-line) 30px
+  );
+  background-attachment: local;
+  border: 0;
+  border-bottom: 1.5px solid var(--paper-shadow);
+  border-radius: 0;
+  padding: 4px 0 6px 0;
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 30px;
+  color: var(--ink-black);
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.welcome__input:focus {
+  border-bottom-color: var(--riso-pink);
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.welcome__input::placeholder {
+  color: var(--rule-line);
+  font-style: italic;
+}
+
+.welcome__begin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 14px 28px;
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: 0.04em;
+  color: var(--paper);
+  background: var(--riso-pink);
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(26, 22, 20, 0.15);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.welcome__begin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 0 rgba(26, 22, 20, 0.18);
+}
+
+.welcome__begin:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 rgba(26, 22, 20, 0.12);
+}
+
+.welcome__begin:focus-visible {
+  outline: 3px solid var(--ink-black);
+  outline-offset: 3px;
+}
+
+@media (max-width: 479px) {
+  .welcome__inner {
+    padding: 24px 18px;
+  }
+
+  .welcome__begin {
+    align-self: stretch;
+    width: 100%;
+  }
+}
+
+.welcome__inner .halftone-band {
+  position: absolute;
+  top: 8%;
+  right: -10%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  opacity: 0.32;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.welcome__inner > *:not(.halftone-band) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── 15b. Journey page wrapper ─── */
+
+.journey {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 0;
+}
+
+.journey .zine {
+  flex: 1;
+}
+
+/* ─── 16. Footer / progress slip ─── */
+
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+  background: var(--paper-deep);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--ink-black);
+  gap: 12px;
+  border-top: 1px solid var(--paper-shadow);
+}
+
+.app-footer__page {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.app-footer__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-black);
+  transition: color 120ms ease;
+}
+
+.app-footer__back:hover {
+  color: var(--riso-pink);
+}
+
+.app-footer__back:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* ─── 16b. Theme toggle button ─── */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-black);
+  transition: color 120ms ease;
+  margin-right: auto; /* push the back button + page number to the right */
+}
+
+.theme-toggle:hover {
+  color: var(--riso-pink);
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+.theme-toggle__icon {
+  font-size: 13px;
+  line-height: 1;
+  font-style: normal;
+}
+
+/* ─── 17. Utility classes ─── */
+
+/* Visually hidden but available to assistive tech (screen-reader-only) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.stack-sm > * + * {
+  margin-top: 8px;
+}
+
+.stack-md > * + * {
+  margin-top: 16px;
+}
+
+.stack-lg > * + * {
+  margin-top: 32px;
+}
+
+.cluster {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.center {
+  text-align: center;
+}
+
+.right-align {
+  text-align: right;
+}
+
+.min-tap {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ─── 18. Print / contrast sanity ─── */
+
+/*
+ * Contrast verification:
+ *   body text: --ink-black (#1A1614) on --paper (#F4ECD8)
+ *     L1 = 0.0110, L2 = 0.8216 → ratio ≈ 14.9:1 ✓ (well above 4.5:1)
+ *   .section-label text: --paper (#F4ECD8) on --stamp-ink (rgba(26,22,20,0.78))
+ *     Effective color ~ #332E2C on #F4ECD8 → ratio ≈ 8.5:1 ✓ (above 3:1 for large text)
+ *   .section-label--yellow text: --ink-black on --riso-yellow
+ *     #1A1614 on #FFD93D → ratio ≈ 8.3:1 ✓
+ *   .quiz-option--selected text: --paper on --riso-pink
+ *     #F4ECD8 on #FF4D7D → ratio ≈ 3.5:1 ✓ (above 3:1 for large text / stamps)
+ *   .callout background: #FFF8D6 with --ink-black text → ratio ≈ 14.1:1 ✓
+ */
+
+/* Widescreen margin increase */
+@media (min-width: 1200px) {
+  .zine {
+    padding: 0 32px;
+  }
+
+  .zine__page {
+    padding: clamp(28px, 3.5vw, 56px);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   19. OVERRIDE — Career cards (.career-card* classes emitted by app.js)
+   ───────────────────────────────────────────────────────────────────────────
+   Self-contained override appended at the end of the file so it wins the
+   cascade over the legacy .career-plate rules above. The reveal spread now
+   renders .career-cards / .career-card / .career-card__* (see app.js
+   renderCareerCard + renderReveal). Nothing here depends on .career-plate.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Scoped reveal tokens — card surface, border, and offset shadow per theme.
+   Dark: opaque warm-dark surface lighter than the near-black dotted reveal
+   field, a visible warm border, and a subtle offset shadow. No glass/blur. */
+.reveal {
+  --card-surface: var(--paper-deep);
+  --card-border: var(--paper-shadow);
+  --card-shadow:
+    0 1px 0 rgba(60, 50, 30, 0.10),
+    2px 2px 0 -1px rgba(60, 50, 30, 0.12);
+}
+
+[data-theme="dark"] .reveal {
+  /* Warm dark-brown surface, clearly lighter than the near-black dotted
+     reveal field (#1A1614 page / #252019 deep) so the card reads as a
+     distinct sheet rather than a flat grid cell. Fully opaque — the card's
+     own background AND the ::before surface both paint the same warm brown,
+     so the halftone field can never bleed through. Border is a clearly
+     visible warm tan; the offset shadow is retained. */
+  --card-surface: #44372A;
+  --card-border: #A88E67;
+  --card-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.35),
+    4px 4px 0 -2px rgba(0, 0, 0, 0.45);
+}
+
+/* Box sizing belt-and-braces for every new card widget */
+.career-card,
+.career-card *,
+.career-card *::before,
+.career-card *::after {
+  box-sizing: border-box;
+}
+
+/* ── Reveal spread framing ── */
+
+.zine.reveal {
+  min-width: 0;
+  flex: 0 1 auto;          /* never flex-grow under the fixed footer */
+}
+
+/* Desktop: the reveal spread is constrained to the viewport above the fixed
+   footer (32px). The left page stays steady; only the right page scrolls. */
+@media (min-width: 768px) {
+  .zine.reveal {
+    height: calc(100vh - 32px);
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .reveal .zine__page {
+    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  .reveal .zine__page--left {
+    overflow: hidden; /* steady — never scrolls, never spills into the footer */
+  }
+
+  .reveal .zine__page--right {
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: 56px;
+    /* Bottom room so the last Discover-more CTA always clears the footer */
+    padding-bottom: 72px;
+  }
+}
+
+/* ── Career cards grid ── */
+
+.career-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 14px;
+  align-content: start;
+  width: 100%;
+  min-width: 0;
+  margin-top: 1em;
+}
+
+.career-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  /* Opaque surface on the element itself as well as the ::before layer, so
+     the card stays a solid sheet even if the pseudo stacking layer blends
+     unexpectedly. No border on the element — the torn-corner pseudo draws
+     the single border, so there is no double edge. */
+  background: var(--card-surface);
+  padding: 18px 22px 26px;
+  transform: rotate(-0.5deg);
+  box-shadow: var(--card-shadow);
+}
+
+/* Raised stacking for the card sheet. The reveal field's halftone pseudo
+   paints at z-index 1; this puts every card face (and its content/daylife
+   layers, which stack inside the card's own isolate context) above it so
+   the yellow dots can never bleed over card faces at mobile widths. */
+.reveal .career-card {
+  z-index: 2;
+}
+
+/* Torn-corner surface. Drawn on a ::before layer (and clipped there) so the
+   card's own box stays un-clipped: the CTA can never be hidden by the tear,
+   and the offset shadow is not clipped away by clip-path. The surface color
+   is fully opaque and matches the card's own background, and the card's
+   isolation:isolate stacking context keeps this ::before (z-index -1)
+   painted above the halftone/dotted field behind the card — the texture
+   never bleeds through the sheet. */
+.career-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--card-surface);
+  border: 2px solid var(--card-border);
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    100% calc(100% - 22px),
+    calc(100% - 22px) 100%,
+    0% 100%
+  );
+}
+
+.career-card__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink-black);
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.career-card__riasec {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.career-card__tier {
+  display: inline-flex;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.career-card__tier-stamp {
+  transform: rotate(-1deg);
+}
+
+/* Descriptive fit tiers — same ink system as the legacy plate */
+.career-card__tier--strong {
+  background: var(--riso-blue);
+  color: var(--paper);
+}
+
+.career-card__tier--good {
+  background: var(--riso-pink);
+  color: var(--paper);
+}
+
+.career-card__tier--adjacent {
+  background: var(--stamp-ink);
+  color: var(--paper);
+}
+
+/* Dark ink on the fluorescent blue/pink stamps for readable contrast in both
+   themes (mirrors the legacy reveal contrast note). Scoped to .reveal. */
+.reveal .career-card__tier--strong,
+.reveal .career-card__tier--good,
+.reveal .section-label--blue {
+  color: #1A1614;
+}
+
+/* ── Country-agnostic role description ──
+   Plain text (no box) between the tier stamp and the day-in-life vignette,
+   so the card keeps its visual hierarchy: stamp → blurb → vignette. */
+.career-card__about {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.career-card__about-caption {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+}
+
+[data-theme="dark"] .career-card__about-caption {
+  color: #F4ECD8;
+}
+
+.career-card__about-text {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-black);
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* ── Synthetic day-in-life vignette ──
+   Content-safe: intrinsic height, generous padding, no fixed 16/7 ratio and
+   no overflow:hidden — long text wraps (overflow-wrap:anywhere) instead of
+   clipping. Halftone dots keep the screen; the fade stays behind the text. */
+.career-card__daylife {
+  position: relative;
+  min-width: 0;
+  margin-top: 12px;
+}
+
+.career-card__daylife--synthetic {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 5px;
+  min-height: 96px;
+  padding: 14px 14px 12px;
+  background: var(--card-surface);
+  border: 1.5px solid var(--card-border);
+  overflow: visible;
+}
+
+/* Halftone dot screen — multiply on light, screen on dark */
+.career-card__daylife--synthetic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 2px 2px, rgba(26, 22, 20, 0.22) 1.2px, transparent 1.2px),
+    radial-gradient(circle at 8px 8px, rgba(26, 22, 20, 0.16) 1px, transparent 1px);
+  background-size: 12px 12px;
+  background-position: 0 0, 6px 6px;
+  mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .career-card__daylife--synthetic::before {
+  mix-blend-mode: screen;
+}
+
+/* Gentle fade to the card surface — painted below the text (z-index 2) so it
+   never obscures the caption or lines. */
+.career-card__daylife--synthetic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 55%, var(--card-surface) 100%);
+}
+
+.career-card__daylife-caption,
+.career-card__daylife-line {
+  position: relative;
+  z-index: 2;
+}
+
+.career-card__daylife-caption {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+}
+
+/* Dark mode — caption ink at full-strength cream instead of the 85%-alpha
+   stamp ink so "A DAY AT WORK" reads clearly against the warm card surface. */
+[data-theme="dark"] .career-card__daylife-caption {
+  color: #F4ECD8;
+}
+
+.career-card__daylife-line {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-black);
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* ── Discover-more CTA (44px target preserved) ── */
+
+.career-card__discover {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 4px;
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--ink-black);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 180ms ease, color 180ms ease; /* reduced-motion handled globally */
+}
+
+.career-card__discover:hover {
+  transform: translateX(2px);
+  color: var(--riso-pink);
+}
+
+.career-card__discover:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
+/* ── Mobile: normal single-column document scroll, no nested scroll trap ── */
+
+@media (max-width: 767px) {
+  .zine.reveal {
+    height: auto;
+  }
+
+  .reveal .zine__page--right {
+    overflow: visible;
+  }
+
+  .career-cards {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}

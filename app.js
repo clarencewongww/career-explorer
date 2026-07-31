@@ -15,7 +15,8 @@ let state = {
   workbookContent: {},
   revealKeptIds: [],
   revealSeenIds: [],
-  revealCardIds: []
+  revealCardIds: [],
+  revealPrevCardIds: null
 };
 
 const TOTAL_STEPS = 1 + 1 + (window.QUIZ_ITEMS ? window.QUIZ_ITEMS.length : 0) + 2; // 1 welcome + 1 intro + N quiz + 1 collating/reveal + 1 workbook
@@ -155,8 +156,18 @@ function attachTypeTooltip(row, tooltip) {
     }
     tooltip.classList.add('type-tooltip--below'); // last resort
   }
-  function show() { place(); tooltip.setAttribute('aria-hidden', 'false'); }
-  function hide() { tooltip.setAttribute('aria-hidden', 'true'); }
+  function show() {
+    // The row's transform creates its own stacking context, which would trap
+    // the tooltip below later siblings (e.g. the next topmark row on mobile).
+    // Lift the row itself while the tooltip is open so it paints on top.
+    row.style.zIndex = 30;
+    place();
+    tooltip.setAttribute('aria-hidden', 'false');
+  }
+  function hide() {
+    row.style.zIndex = '';
+    tooltip.setAttribute('aria-hidden', 'true');
+  }
   // Touch devices have no hover and synthesize misleading mouse events around
   // a tap, so pick one interaction channel per device: touch → tap toggles the
   // tooltip (a tap anywhere else closes it); pointer devices → hover/focus.
@@ -528,9 +539,11 @@ function phaseToPage(phase, quizIndex) {
  * @param {boolean} showBack Whether to include a "Back" button.
  * @param {string}  backLabel   Button label text.
  * @param {Function} backAction  Click handler for the back button.
+ * @param {boolean} testSkip  TEST-ONLY: include a "Skip quiz" shortcut (see
+ *                            skipToCollating). REMOVE before final deployment.
  * @return {Element}
  */
-function renderFooter(page, showBack, backLabel, backAction) {
+function renderFooter(page, showBack, backLabel, backAction, testSkip) {
   var footer = document.createElement('div');
   footer.className = 'app-footer';
 
@@ -552,6 +565,19 @@ function renderFooter(page, showBack, backLabel, backAction) {
       backBtn.addEventListener('click', backAction);
     }
     footer.appendChild(backBtn);
+  }
+
+  // TEST-ONLY: quiz shortcut so reviewers can skip straight to the reveal.
+  // ⚠️ REMOVE before final deployment (button + skipToCollating + the
+  //    renderFooter call in renderQuiz).
+  if (testSkip) {
+    var skipBtn = document.createElement('button');
+    skipBtn.type = 'button';
+    skipBtn.className = 'app-footer__test';
+    skipBtn.textContent = 'Skip quiz \u2192';
+    skipBtn.setAttribute('aria-label', 'Skip quiz (test only)');
+    skipBtn.addEventListener('click', skipToCollating);
+    footer.appendChild(skipBtn);
   }
 
   var pageNum = document.createElement('span');
@@ -894,7 +920,9 @@ function renderQuiz() {
   var container = document.createElement('div');
   container.className = 'journey';
   container.appendChild(zine);
-  container.appendChild(renderFooter(phaseToPage('quiz', idx), true, '\u2190 Back', goToPrevQuizItem));
+  // TEST-ONLY: pass true to show the "Skip quiz" footer shortcut. REMOVE
+  // before final deployment.
+  container.appendChild(renderFooter(phaseToPage('quiz', idx), true, '\u2190 Back', goToPrevQuizItem, true));
 
   return container;
 }
@@ -1497,47 +1525,47 @@ function renderCareerCard(pick, kept, fresh) {
   return article;
 }
 
-function renderReveal() {
+// { id: career } map over the deduplicated dataset — shared by the reveal
+// renderer (id → displayed card) and the shuffle builder (kept lookup).
+function getCareerByIdMap() {
+  var all = dedupeCareers(window.CAREERS || []);
+  var byId = {};
+  for (var i = 0; i < all.length; i++) byId[all[i].id] = all[i];
+  return byId;
+}
+
+// Compute the next grid after a shuffle. Kept cards never move; on desktop the
+// remaining slots swap in place (slot-stable), on mobile fresh suggestions
+// sort to the top and kept cards drop to the bottom (reserving their slots so
+// they can never be pushed off-grid).
+function buildShuffledPicks() {
   var profile = state.riasecProfile || {};
   var topLetters = getUserTopLetters(profile);
   var excluded = state.revealKeptIds.concat(state.revealSeenIds);
   var freshPicks = pickRevealCareers(profile, excluded);
-  // Capture the previous display order BEFORE overwriting it below — it drives
-  // both the desktop slot-stable ordering and the fresh-card animation.
-  var prevCardIds = (state.revealCardIds || []).slice();
+  var byId = getCareerByIdMap();
 
-  // Kept-career lookup, shared by both viewport layouts.
   var keptPicks = [];
-  var byId = {};
-  if (state.revealKeptIds.length) {
-    var all = dedupeCareers(window.CAREERS || []);
-    for (var a = 0; a < all.length; a++) byId[all[a].id] = all[a];
-    for (var k = 0; k < state.revealKeptIds.length; k++) {
-      var keptCareer = byId[state.revealKeptIds[k]];
-      if (!keptCareer) continue;
-      keptPicks.push({
-        career: keptCareer,
-        score: scoreCareerMatch(keptCareer, topLetters),
-        tier: getCareerTier(keptCareer, topLetters),
-        idx: -1
-      });
-    }
+  for (var k = 0; k < state.revealKeptIds.length; k++) {
+    var keptCareer = byId[state.revealKeptIds[k]];
+    if (!keptCareer) continue;
+    keptPicks.push({
+      career: keptCareer,
+      score: scoreCareerMatch(keptCareer, topLetters),
+      tier: getCareerTier(keptCareer, topLetters),
+      idx: -1
+    });
   }
 
-  // Viewport-aware ordering. Desktop keeps the previous display order so a
-  // kept card never moves slots and a shuffle swaps content only in non-kept
-  // slots. Mobile (single column) shows fresh suggestions first, kept cards
-  // dropping to the bottom.
   var picks;
-  if (window.innerWidth >= 768 && prevCardIds.length) {
+  if (window.innerWidth >= 768 && state.revealCardIds.length) {
     var usedFresh = {};
     var nextFresh = 0;
     var ordered = [];
-    for (var s = 0; s < prevCardIds.length; s++) {
-      var prevId = prevCardIds[s];
-      if (state.revealKeptIds.indexOf(prevId) !== -1 && byId[prevId]) {
-        // Kept — locked into its previous slot
-        var lockedCareer = byId[prevId];
+    var prevIds = state.revealCardIds;
+    for (var s = 0; s < prevIds.length; s++) {
+      if (state.revealKeptIds.indexOf(prevIds[s]) !== -1 && byId[prevIds[s]]) {
+        var lockedCareer = byId[prevIds[s]];
         ordered.push({
           career: lockedCareer,
           score: scoreCareerMatch(lockedCareer, topLetters),
@@ -1545,7 +1573,6 @@ function renderReveal() {
           idx: -1
         });
       } else {
-        // Slot's old content is gone or unkept — swap in the next fresh pick
         while (nextFresh < freshPicks.length && usedFresh[freshPicks[nextFresh].career.id]) nextFresh++;
         if (nextFresh < freshPicks.length) {
           ordered.push(freshPicks[nextFresh]);
@@ -1554,7 +1581,6 @@ function renderReveal() {
         }
       }
     }
-    // Append any remaining fresh picks, then cap at four
     for (; nextFresh < freshPicks.length && ordered.length < 4; nextFresh++) {
       if (usedFresh[freshPicks[nextFresh].career.id]) continue;
       ordered.push(freshPicks[nextFresh]);
@@ -1562,18 +1588,46 @@ function renderReveal() {
     }
     picks = ordered.slice(0, 4);
   } else if (window.innerWidth >= 768) {
-    // First visit — fresh picks in their natural order
     picks = freshPicks.slice(0, 4);
   } else {
-    // Mobile — fresh suggestions first, kept cards drop to the bottom. Kept
-    // cards always reserve their slots so they can never be pushed off-grid.
     var freshRoom = Math.max(0, 4 - keptPicks.length);
     picks = freshPicks.slice(0, freshRoom).concat(keptPicks).slice(0, 4);
   }
+  return picks;
+}
 
-  // Record the displayed order for the next render's slot-stability
-  state.revealCardIds = picks.map(function (p) { return p.career.id; });
+function renderReveal() {
+  var profile = state.riasecProfile || {};
+  var topLetters = getUserTopLetters(profile);
+  var excluded = state.revealKeptIds.concat(state.revealSeenIds);
+  // The grid renders EXACTLY what revealCardIds holds, in that order — keeping
+  // a card only flips the kept flag and never reorders or swaps cards. Only
+  // the shuffle action replaces ids; it stashes the previous order in
+  // revealPrevCardIds so the fresh-card stamp-in can tell what changed.
+  var prevForFresh = state.revealPrevCardIds !== null
+    ? state.revealPrevCardIds
+    : (state.revealCardIds || []).slice();
+  state.revealPrevCardIds = null;
 
+  var byId = getCareerByIdMap();
+  var picks = [];
+  var gridIds = state.revealCardIds || [];
+  if (gridIds.length) {
+    for (var o = 0; o < gridIds.length; o++) {
+      var displayed = byId[gridIds[o]];
+      if (!displayed) continue;
+      picks.push({
+        career: displayed,
+        score: scoreCareerMatch(displayed, topLetters),
+        tier: getCareerTier(displayed, topLetters),
+        idx: -1
+      });
+    }
+  } else {
+    // First visit — pick the top matches; the empty state shows if none exist.
+    picks = pickRevealCareers(profile, excluded).slice(0, 4);
+    state.revealCardIds = picks.map(function (p) { return p.career.id; });
+  }
   var zine = document.createElement('div');
   zine.className = 'zine reveal';
 
@@ -1711,12 +1765,16 @@ function renderReveal() {
     shuffleBtn.className = 'reveal__shuffle min-tap';
     shuffleBtn.textContent = 'Show me different careers \u2192';
     shuffleBtn.addEventListener('click', function () {
+      // The currently displayed cards are now "seen" — future shuffles exclude them.
       var next = state.revealSeenIds.slice();
-      for (var s = 0; s < picks.length; s++) {
-        var id = picks[s].career.id;
+      for (var s = 0; s < state.revealCardIds.length; s++) {
+        var id = state.revealCardIds[s];
         if (next.indexOf(id) === -1) next.push(id);
       }
       state.revealSeenIds = next;
+      var newPicks = buildShuffledPicks();
+      state.revealPrevCardIds = state.revealCardIds.slice();
+      state.revealCardIds = newPicks.map(function (p) { return p.career.id; });
       refreshReveal();
       // Mobile: bring the fresh cards into view. refreshReveal renders
       // synchronously; one rAF makes sure layout is fresh before measuring.
@@ -1753,7 +1811,7 @@ function renderReveal() {
   } else {
     for (var p = 0; p < picks.length; p++) {
       var isKept = state.revealKeptIds.indexOf(picks[p].career.id) !== -1;
-      var isFresh = prevCardIds.indexOf(picks[p].career.id) === -1;
+      var isFresh = prevForFresh.indexOf(picks[p].career.id) === -1;
       cards.appendChild(renderCareerCard(picks[p], isKept, isFresh));
     }
   }
@@ -1874,7 +1932,7 @@ function goToWelcome() {
       riasecProfile: null,
       revealKeptIds: [],
       revealSeenIds: [],
-      revealCardIds: []
+      revealCardIds: [], revealPrevCardIds: null
       // user is NOT touched — preserved
     });
     render();
@@ -1883,7 +1941,7 @@ function goToWelcome() {
 
 function goToIntro() {
   foldNavigate(function () {
-    setState({ phase: 'intro', quizIndex: 0, quizAnswers: {}, riasecProfile: null, revealKeptIds: [], revealSeenIds: [], revealCardIds: [] });
+    setState({ phase: 'intro', quizIndex: 0, quizAnswers: {}, riasecProfile: null, revealKeptIds: [], revealSeenIds: [], revealCardIds: [], revealPrevCardIds: null });
     // user is preserved
     render();
   });
@@ -1891,8 +1949,41 @@ function goToIntro() {
 
 function goToQuiz() {
   foldNavigate(function () {
-    setState({ phase: 'quiz', quizIndex: 0, quizAnswers: {}, riasecProfile: null, revealKeptIds: [], revealSeenIds: [], revealCardIds: [] });
+    setState({ phase: 'quiz', quizIndex: 0, quizAnswers: {}, riasecProfile: null, revealKeptIds: [], revealSeenIds: [], revealCardIds: [], revealPrevCardIds: null });
     render();
+  });
+}
+
+// TEST-ONLY: score what the student answered, or use the fixed demo profile
+// when the partial answers carry too little signal (fewer than a third of the
+// quiz answered — the letter counts are then mostly ties, so the top-3 letters
+// would be decided by the RIASEC tie-break rather than real data). Logs what
+// it used so testers can see the profile behind the reveal.
+// ⚠️ REMOVE before final deployment (also the app-footer__test button in
+//    renderFooter and its renderQuiz call).
+var DEMO_PROFILE = { R: 5, I: 4, A: 3, S: 2, E: 1, C: 0 };
+var SKIP_MIN_ANSWERS = 8;
+
+function skipToCollating() {
+  var profile = scoreRiasecProfile(state.quizAnswers);
+  var answered = 0;
+  for (var key in state.quizAnswers) {
+    if (state.quizAnswers[key] != null) answered++;
+  }
+  var source;
+  if (answered < SKIP_MIN_ANSWERS) {
+    profile = DEMO_PROFILE;
+    source = 'demo profile (only ' + answered + ' of 24 answered — too little signal)';
+  } else {
+    source = 'partial answers (' + answered + ' of 24)';
+  }
+  console.log('[test skip] using ' + source + ' → top letters ' + getUserTopLetters(profile).join(''));
+  setState({ riasecProfile: profile });
+  foldNavigate(function () {
+    setState({ phase: 'collating' });
+    render();
+    window.scrollTo(0, 0);
+    startCollate();
   });
 }
 

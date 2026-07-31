@@ -1948,6 +1948,37 @@ body {
   outline-offset: 3px;
 }
 
+/* TEST-ONLY: "Skip quiz" shortcut button. Dashed border marks it as
+   temporary — REMOVE this rule before final deployment. */
+.app-footer__test {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: none;
+  border: 1.5px dashed var(--riso-pink);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--riso-pink);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.app-footer__test:hover {
+  background: var(--riso-pink);
+  color: var(--paper);
+}
+
+.app-footer__test:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 3px;
+}
+
 /* ─── 16b. Theme toggle button ─── */
 
 .theme-toggle {

@@ -173,17 +173,15 @@ function attachTypeTooltip(row, tooltip) {
     row.style.zIndex = '';
     tooltip.setAttribute('aria-hidden', 'true');
   }
-  // Touch: a press toggles the tooltip — first press opens it, pressing the
-  // row or the open tooltip again closes it. This works on every touch device
-  // (the hover media query is not a reliable touch detector on hybrids).
-  // Synthesized hover events that follow a tap are ignored for a short window
-  // so they can't re-open or close the tooltip right after the toggle.
+  // Touch: a press opens the tooltip. Pressing the row again does NOT toggle
+  // it closed (unreliable on real devices) — the tooltip carries a tiny hint
+  // telling users to tap anywhere else to dismiss. Synthesized hover events
+  // that follow a tap are ignored for a short window so they can't re-open or
+  // close the tooltip right after the press.
   var lastTouchAt = 0;
   row.addEventListener('touchstart', function () {
     lastTouchAt = Date.now();
-    if (tooltip.getAttribute('aria-hidden') === 'false') {
-      hide();
-    } else {
+    if (tooltip.getAttribute('aria-hidden') !== 'false') {
       show();
     }
   });
@@ -193,22 +191,26 @@ function attachTypeTooltip(row, tooltip) {
       hide();
     }
   });
-  // A mouse click on the row toggles too (trackpad/mouse users "tap" with
-  // clicks — touchstart never fires for them). Synthesized clicks that follow
-  // a real touch gesture are ignored so the touchstart toggle isn't doubled.
+  // A mouse click on the row opens it too (trackpad/mouse users "tap" with
+  // clicks — touchstart never fires for them). Clicking again while open does
+  // nothing; they dismiss by moving the pointer away or clicking elsewhere.
+  // Synthesized clicks that follow a real touch gesture are ignored so the
+  // open-on-press isn't doubled.
   row.addEventListener('click', function () {
     if (Date.now() - lastTouchAt < 600) return;
-    if (tooltip.getAttribute('aria-hidden') === 'false') {
-      hide();
-    } else {
+    if (tooltip.getAttribute('aria-hidden') !== 'false') {
       show();
     }
   });
-  // Pressing the open tooltip itself closes it (and never toggles the row
-  // beneath it, thanks to stopPropagation). Hidden tooltips keep
-  // pointer-events: none so they never intercept anything.
+  // Pressing the open tooltip closes it (and never toggles the row beneath
+  // it, thanks to stopPropagation). Clicks inside the 600ms touch window are
+  // synthesized by the browser right after the opening tap — while the
+  // tooltip's entrance transform is still mid-transition it sits over the
+  // finger, so an ungated click would hit the tooltip and close it instantly.
+  // Hidden tooltips keep pointer-events: none so they never intercept anything.
   tooltip.addEventListener('click', function (e) {
     e.stopPropagation();
+    if (Date.now() - lastTouchAt < 600) return;
     hide();
   });
   // Hover/focus for pointer devices.
@@ -1222,7 +1224,7 @@ function renderQuizLeftPage(item, idx, total) {
     tooltip.className = 'type-tooltip';
     tooltip.setAttribute('aria-hidden', 'true');
     tooltip.setAttribute('role', 'tooltip');
-    tooltip.innerHTML = '<span class="type-tooltip__name">' + rt.letter + ' \u00B7 ' + rt.name + '</span><span class="type-tooltip__desc">' + rt.desc + '</span>';
+    tooltip.innerHTML = '<span class="type-tooltip__name">' + rt.letter + ' \u00B7 ' + rt.name + '</span><span class="type-tooltip__desc">' + rt.desc + '</span><span class="type-tooltip__hint">Tap elsewhere to dismiss</span>';
     row.appendChild(tooltip);
 
     attachTypeTooltip(row, tooltip);
@@ -1752,7 +1754,7 @@ function renderReveal() {
     tooltip.className = 'type-tooltip type-tooltip--reveal';
     tooltip.setAttribute('aria-hidden', 'true');
     tooltip.setAttribute('role', 'tooltip');
-    tooltip.innerHTML = '<span class="type-tooltip__name">No. ' + (i + 1) + ' \u00B7 ' + letter + ' \u00B7 ' + riasecName(letter) + '</span><span class="type-tooltip__desc">' + riasecDesc(letter) + '</span>';
+    tooltip.innerHTML = '<span class="type-tooltip__name">No. ' + (i + 1) + ' \u00B7 ' + letter + ' \u00B7 ' + riasecName(letter) + '</span><span class="type-tooltip__desc">' + riasecDesc(letter) + '</span><span class="type-tooltip__hint">Tap elsewhere to dismiss</span>';
     row.appendChild(tooltip);
 
     attachTypeTooltip(row, tooltip);

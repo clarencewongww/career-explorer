@@ -691,6 +691,12 @@ function render() {
 
   app.innerHTML = '';
   app.appendChild(content);
+
+  // Expand controls need the cards in the document to measure truncation.
+  if (phase === 'reveal') {
+    var expandGrid = document.querySelector('.career-cards');
+    if (expandGrid) finalizeCardExpansion(expandGrid);
+  }
 }
 
 // ─── Welcome page (full-page composition, no zine spread) ───────────────
@@ -1507,6 +1513,54 @@ function buildDayLife(career) {
 // re-renders (the DOM is rebuilt, but the id stays the same while shown).
 var expandedCardIds = {};
 
+// True when a copy element is actually hiding words: it is display:none
+// (compact scope hides the 3rd vignette line) or its content overflows the
+// clamped box. Non-truncated cards must NOT show the expand control — a
+// "See more" that reveals nothing is misleading.
+function isCardCopyTruncated(el) {
+  var cs = getComputedStyle(el);
+  if (cs.display === 'none') return true;
+  return el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+}
+
+// Decide per-card expand-button visibility AFTER the card is in the DOM
+// (layout must exist to measure truncation) and re-apply the persisted
+// expanded state. Runs on every reveal render and on window resize.
+function finalizeCardExpansion(grid) {
+  var cards = grid.querySelectorAll('.career-card');
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    var id = card.getAttribute('data-id');
+    var isExpanded = !!(id && expandedCardIds[id]);
+    var truncated = false;
+    var texts = card.querySelectorAll('.career-card__about-text, .career-card__daylife-line');
+    for (var t = 0; t < texts.length; t++) {
+      if (isCardCopyTruncated(texts[t])) { truncated = true; break; }
+    }
+    var btn = card.querySelector('.career-card__expand');
+    if (!btn) continue;
+    if (isExpanded) card.classList.add('career-card--expanded');
+    // The control exists only when the COLLAPSED card hides words.
+    btn.hidden = !truncated;
+    if (truncated) {
+      btn.textContent = isExpanded ? 'See less' : 'See more';
+      btn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    }
+  }
+}
+
+// Re-evaluate the expand controls when the viewport changes width (wide →
+// compact cards truncate; narrow → full-size cards show everything).
+var cardResizeTimer = null;
+window.addEventListener('resize', function () {
+  clearTimeout(cardResizeTimer);
+  cardResizeTimer = setTimeout(function () {
+    if (state.phase !== 'reveal') return;
+    var grid = document.querySelector('.career-cards');
+    if (grid) finalizeCardExpansion(grid);
+  }, 150);
+});
+
 // Build a single .career-card article for one pick. kept marks the card as
 // kept (stamp state + data-kept), and the whole card toggles keep on tap.
 // fresh marks a card whose content is newly shown this render — it gets the
@@ -1518,6 +1572,7 @@ function renderCareerCard(pick, kept, fresh) {
 
   var article = document.createElement('article');
   article.className = 'career-card';
+  article.setAttribute('data-id', career.id);
   article.setAttribute('data-kept', kept ? 'true' : 'false');
   if (kept) article.classList.add('career-card--kept');
   if (fresh) article.classList.add('career-card--fresh');
@@ -1613,15 +1668,15 @@ function renderCareerCard(pick, kept, fresh) {
   }
   article.appendChild(daylife);
 
-  // Expand/collapse control for the about + day-life copy — the blurbs are
-  // clamped short by default; "See more" reveals the full text.
-  var isExpanded = !!expandedCardIds[career.id];
-  if (isExpanded) article.classList.add('career-card--expanded');
+  // Expand/collapse control for the about + day-life copy — created hidden;
+  // finalizeCardExpansion() (after the card is in the DOM) shows it ONLY when
+  // the collapsed card actually truncates words, so a "See more" that reveals
+  // nothing never appears.
   var expandBtn = document.createElement('button');
   expandBtn.type = 'button';
   expandBtn.className = 'career-card__expand';
-  expandBtn.textContent = isExpanded ? 'See less' : 'See more';
-  expandBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+  expandBtn.hidden = true;
+  expandBtn.setAttribute('aria-expanded', 'false');
   expandBtn.addEventListener('click', function (e) {
     e.stopPropagation();
     var nowExpanded = article.classList.toggle('career-card--expanded');

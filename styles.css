@@ -784,6 +784,11 @@ p + p {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 1.2em;
+  /* Shrink-wrap to the WIDEST row so all three rows match each other's
+     length (never the full column, never the ragged per-word length). */
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .reveal__topmark {
@@ -792,9 +797,6 @@ p + p {
   gap: 10px;
   min-height: 44px;
   padding: 6px 10px;
-  /* Full-width rows — all three "What stood out" cards are the same length
-     on every viewport (previously fit-content, so the word lengths made
-     each row a different width and read like ranking bars). */
   width: 100%;
   background: var(--paper);
   border: 1.5px solid var(--paper-shadow);
@@ -2262,6 +2264,17 @@ p + p {
   );
 }
 
+/* Name + keep stamp on one flex line: long names wrap in their own space
+   and can never run underneath the stamp (it used to be absolutely
+   positioned over the top-right corner and covered multi-line names). */
+.career-card__name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
 .career-card__name {
   font-family: var(--font-display);
   font-weight: 800;
@@ -2270,6 +2283,7 @@ p + p {
   line-height: 1.1;
   color: var(--ink-black);
   margin: 0;
+  flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -2505,12 +2519,10 @@ p + p {
   border-radius: 1px;
 }
 
-/* Corner keep stamp — the accessible toggle for keep */
+/* Corner keep stamp — the accessible toggle for keep. Lives at the end of
+   the name row (static, not absolute) so it can never cover card text. */
 .career-card__keep {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 3;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;

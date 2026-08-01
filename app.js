@@ -1522,11 +1522,33 @@ function renderCareerCard(pick, kept, fresh) {
   if (kept) article.classList.add('career-card--kept');
   if (fresh) article.classList.add('career-card--fresh');
 
-  // Career name
+  // Name row: career name + corner keep stamp share one flex line, so long
+  // names wrap inside their own space and NEVER run underneath the stamp
+  // (it was absolutely positioned and covered multi-line names).
+  var nameRow = document.createElement('div');
+  nameRow.className = 'career-card__name-row';
+
   var nameEl = document.createElement('h3');
   nameEl.className = 'career-card__name';
   nameEl.textContent = career.name;
-  article.appendChild(nameEl);
+  nameRow.appendChild(nameEl);
+
+  // Corner keep stamp — the accessible toggle for keep. It calls
+  // stopPropagation so the whole-card tap handler below never double-fires.
+  var keepBtn = document.createElement('button');
+  keepBtn.type = 'button';
+  keepBtn.className = 'career-card__keep min-tap';
+  keepBtn.setAttribute('aria-pressed', kept ? 'true' : 'false');
+  keepBtn.textContent = kept ? 'KEPT \u2713' : 'KEEP';
+  keepBtn.addEventListener('click', (function (c) {
+    return function (e) {
+      e.stopPropagation();
+      toggleKeep(c.id);
+    };
+  })(career));
+  nameRow.appendChild(keepBtn);
+
+  article.appendChild(nameRow);
 
   // RIASEC marks
   var riasec = document.createElement('div');
@@ -1629,21 +1651,6 @@ function renderCareerCard(pick, kept, fresh) {
   ctaRow.appendChild(openBtn);
   ctaRow.appendChild(expandBtn);
   article.appendChild(ctaRow);
-
-  // Corner keep stamp — the accessible control for toggling keep. It calls
-  // stopPropagation so the whole-card tap handler below never double-fires.
-  var keepBtn = document.createElement('button');
-  keepBtn.type = 'button';
-  keepBtn.className = 'career-card__keep min-tap';
-  keepBtn.setAttribute('aria-pressed', kept ? 'true' : 'false');
-  keepBtn.textContent = kept ? 'KEPT \u2713' : 'KEEP';
-  keepBtn.addEventListener('click', (function (c) {
-    return function (e) {
-      e.stopPropagation();
-      toggleKeep(c.id);
-    };
-  })(career));
-  article.appendChild(keepBtn);
 
   // Whole-card tap toggles keep — but never for Discover-more, the stamp,
   // or the expand/collapse control

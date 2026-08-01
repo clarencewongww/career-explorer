@@ -2445,6 +2445,16 @@ p + p {
 
 /* ── Discover-more CTA (44px target preserved) ── */
 
+/* CTA row: Discover more + See more/less share one line so the expand
+   control adds no card height (keeps the desktop compact fit). */
+.career-card__cta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 14px;
+}
+
 .career-card__discover {
   display: inline-flex;
   align-items: center;
@@ -2452,7 +2462,6 @@ p + p {
   min-width: 44px;
   min-height: 44px;
   padding: 10px 4px;
-  margin-top: 14px;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 14px;
@@ -2609,6 +2618,120 @@ p + p {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--riso-pink);
+}
+
+/* ── Reveal: search a career ── */
+
+.reveal__search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 1.1em;
+  padding: 12px 14px 13px;
+  background: var(--paper);
+  border: 1.5px dashed var(--paper-shadow);
+  border-radius: 3px;
+}
+
+.reveal__search-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-black);
+}
+
+.reveal__search-input {
+  display: block;
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid var(--paper-shadow);
+  border-radius: 0;
+  padding: 4px 0 6px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--ink-black);
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.reveal__search-input:focus {
+  border-bottom-color: var(--riso-pink);
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.reveal__search-input::placeholder {
+  color: var(--rule-line);
+  font-style: italic;
+}
+
+.reveal__search-note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--stamp-ink);
+}
+
+.reveal__search-results {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 232px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The display:flex above would otherwise defeat the hidden attribute */
+.reveal__search-results[hidden] {
+  display: none;
+}
+
+.reveal__search-result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--ink-black);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule-line);
+  cursor: pointer;
+}
+
+.reveal__search-result:hover {
+  background: var(--paper-deep);
+}
+
+.reveal__search-result:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: -1px;
+}
+
+.reveal__search-result-letters {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--stamp-ink);
 }
 
 .reveal__exhausted {
@@ -2790,11 +2913,24 @@ p + p {
   }
 
   .career-card__discover {
-    margin-top: 8px;
     padding: 8px 4px;
     min-width: 44px;
     min-height: 44px;
     font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .career-card__cta-row {
+    margin-top: 8px;
+    gap: 4px 10px;
+  }
+
+  .career-card__expand {
+    padding: 4px 0;
+    min-height: 28px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
   }
 
   .career-card__keep {
@@ -2803,6 +2939,49 @@ p + p {
     min-width: 44px;
     min-height: 44px;
   }
+}
+
+/* ── Expandable card copy — "See more / See less" ──
+   About + day-life blurbs are clamped short by default; expanding the card
+   (`.career-card--expanded`) shows the full text. These overrides beat the
+   compact-scope clamps above by specificity. */
+
+.career-card__expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 6px 2px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stamp-ink);
+  background: none;
+  border: none;
+  border-bottom: 1.5px dashed var(--paper-shadow);
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+
+.career-card__expand:hover {
+  color: var(--riso-pink);
+}
+
+.career-card__expand:focus-visible {
+  outline: 3px solid var(--riso-pink);
+  outline-offset: 2px;
+}
+
+.career-card--expanded .career-card__about-text,
+.career-card--expanded .career-card__daylife-line {
+  display: block;
+  overflow: visible;
+}
+
+.career-card--expanded .career-card__daylife-line:nth-child(3) {
+  display: block;
 }
 
 /* ── Mobile: normal single-column document scroll, no nested scroll trap ── */
@@ -2814,6 +2993,21 @@ p + p {
 
   .reveal .zine__page--right {
     overflow: visible;
+  }
+
+  /* Collapsed teaser copy on mobile too — expand with "See more" */
+  .career-card__about-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .career-card__daylife-line {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .career-cards {

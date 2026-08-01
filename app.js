@@ -1291,10 +1291,10 @@ function renderQuizLeftPage(item, idx, total) {
 // How long the collating "calculation" beat lasts before the reveal.
 var COLLATE_MS = 5000;
 
-// Rotating micro-captions under the stamp tiles while the answers stack.
+// Rotating micro-captions under the stamp tiles while the answers tally.
 var COLLATE_CAPTIONS = [
   'Folding your answers in\u2026',
-  'Counting the six stacks\u2026',
+  'Tallying the six letter themes\u2026',
   'Sorting by what stood out\u2026',
   'Finding close matches\u2026',
   'Nearly there\u2026'
@@ -1408,7 +1408,7 @@ function renderCollating() {
   var status = document.createElement('span');
   status.className = 'sr-only collate-progress__status';
   status.setAttribute('role', 'status');
-  status.textContent = 'Stacking your answers\u2026';
+  status.textContent = 'Tallying your answers\u2026';
   progress.appendChild(status);
 
   left.appendChild(progress);
@@ -1424,7 +1424,7 @@ function renderCollating() {
 
   var foldLabel = document.createElement('div');
   foldLabel.className = 'section-label section-label--yellow';
-  foldLabel.textContent = 'STACKING';
+  foldLabel.textContent = 'TALLYING';
   right.appendChild(foldLabel);
 
   var para = document.createElement('p');
@@ -1502,6 +1502,10 @@ function buildDayLife(career) {
   }
   return lines;
 }
+
+// Expanded-card copy state, keyed by career id so it survives keep/shuffle
+// re-renders (the DOM is rebuilt, but the id stays the same while shown).
+var expandedCardIds = {};
 
 // Build a single .career-card article for one pick. kept marks the card as
 // kept (stamp state + data-kept), and the whole card toggles keep on tap.
@@ -1587,6 +1591,24 @@ function renderCareerCard(pick, kept, fresh) {
   }
   article.appendChild(daylife);
 
+  // Expand/collapse control for the about + day-life copy — the blurbs are
+  // clamped short by default; "See more" reveals the full text.
+  var isExpanded = !!expandedCardIds[career.id];
+  if (isExpanded) article.classList.add('career-card--expanded');
+  var expandBtn = document.createElement('button');
+  expandBtn.type = 'button';
+  expandBtn.className = 'career-card__expand';
+  expandBtn.textContent = isExpanded ? 'See less' : 'See more';
+  expandBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+  expandBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var nowExpanded = article.classList.toggle('career-card--expanded');
+    if (nowExpanded) expandedCardIds[career.id] = true;
+    else delete expandedCardIds[career.id];
+    expandBtn.textContent = nowExpanded ? 'See less' : 'See more';
+    expandBtn.setAttribute('aria-expanded', nowExpanded ? 'true' : 'false');
+  });
+
   // Accessible discover-more action — opens the selected career's workbook (44px min target from .min-tap)
   var openBtn = document.createElement('button');
   openBtn.type = 'button';
@@ -1599,7 +1621,14 @@ function renderCareerCard(pick, kept, fresh) {
       goToWorkbook();
     };
   })(career));
-  article.appendChild(openBtn);
+
+  // CTA row: Discover more + See more/less side by side, so the expand control
+  // costs no extra card height (desktop compact fit stays intact).
+  var ctaRow = document.createElement('div');
+  ctaRow.className = 'career-card__cta-row';
+  ctaRow.appendChild(openBtn);
+  ctaRow.appendChild(expandBtn);
+  article.appendChild(ctaRow);
 
   // Corner keep stamp — the accessible control for toggling keep. It calls
   // stopPropagation so the whole-card tap handler below never double-fires.
@@ -1616,10 +1645,12 @@ function renderCareerCard(pick, kept, fresh) {
   })(career));
   article.appendChild(keepBtn);
 
-  // Whole-card tap toggles keep — but never for Discover-more or the stamp
+  // Whole-card tap toggles keep — but never for Discover-more, the stamp,
+  // or the expand/collapse control
   article.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('.career-card__discover')) return;
     if (e.target.closest && e.target.closest('.career-card__keep')) return;
+    if (e.target.closest && e.target.closest('.career-card__expand')) return;
     toggleKeep(career.id);
   });
 
@@ -1895,6 +1926,128 @@ function renderReveal() {
   }
 
   right.appendChild(actions);
+
+  // ── Search a career — a picked result replaces the first unkept card ──
+  var searchSection = document.createElement('section');
+  searchSection.className = 'reveal__search';
+
+  var searchLabel = document.createElement('label');
+  searchLabel.className = 'reveal__search-label';
+  searchLabel.setAttribute('for', 'career-search');
+  searchLabel.textContent = 'SEARCH A CAREER';
+  searchSection.appendChild(searchLabel);
+
+  var searchInput = document.createElement('input');
+  searchInput.type = 'search';
+  searchInput.id = 'career-search';
+  searchInput.className = 'reveal__search-input min-tap';
+  searchInput.placeholder = 'Type a career name\u2026';
+  searchInput.setAttribute('autocomplete', 'off');
+  searchInput.setAttribute('aria-controls', 'career-search-results');
+  searchSection.appendChild(searchInput);
+
+  var searchNote = document.createElement('p');
+  searchNote.className = 'reveal__search-note';
+  searchNote.setAttribute('role', 'status');
+  searchNote.setAttribute('aria-live', 'polite');
+  searchNote.textContent = 'Picking a result swaps it in for one of your unkept cards.';
+  searchSection.appendChild(searchNote);
+
+  var searchResults = document.createElement('ul');
+  searchResults.id = 'career-search-results';
+  searchResults.className = 'reveal__search-results';
+  searchResults.setAttribute('aria-label', 'Career search results');
+  searchResults.hidden = true;
+  searchSection.appendChild(searchResults);
+
+  // Replace the first unkept grid slot with the searched career; when the
+  // grid has room (or is empty), the result is appended as a new card instead.
+  var replaceWithSearchPick = (function () {
+    return function (career) {
+      var byId = getCareerByIdMap();
+      var grid = state.revealCardIds.slice();
+      var slot = -1;
+      for (var g = 0; g < grid.length; g++) {
+        if (state.revealKeptIds.indexOf(grid[g]) === -1) { slot = g; break; }
+      }
+      if (slot === -1 && grid.length < 4) slot = grid.length;
+      if (slot === -1) {
+        searchNote.textContent = 'You\u2019ve kept every card \u2014 unkeep one to make room.';
+        return;
+      }
+      if (grid.indexOf(career.id) !== -1) {
+        searchNote.textContent = career.name + ' is already on your board.';
+        return;
+      }
+      var replaced = grid[slot];
+      grid[slot] = career.id;
+      state.revealPrevCardIds = state.revealCardIds.slice();
+      state.revealCardIds = grid;
+      // The swapped-out career counts as seen, so shuffles won't bring it back.
+      if (replaced) {
+        var seen = state.revealSeenIds.slice();
+        if (seen.indexOf(replaced) === -1) seen.push(replaced);
+        state.revealSeenIds = seen;
+      }
+      refreshReveal();
+      var freshInput = document.getElementById('career-search');
+      if (freshInput) freshInput.focus();
+    };
+  })();
+
+  searchInput.addEventListener('input', function () {
+    var raw = searchInput.value.trim();
+    var q = raw.toLowerCase().replace(/[\s-]+/g, '');
+    searchResults.innerHTML = '';
+    searchNote.textContent = 'Picking a result swaps it in for one of your unkept cards.';
+    if (!q) {
+      searchResults.hidden = true;
+      return;
+    }
+    var all = dedupeCareers(window.CAREERS || []);
+    var matches = [];
+    for (var m = 0; m < all.length && matches.length < 8; m++) {
+      var hay = all[m].name.toLowerCase().replace(/[\s-]+/g, '');
+      if (hay.indexOf(q) !== -1) {
+        matches.push({ career: all[m], hay: hay });
+      }
+    }
+    // Exact/prefix name matches first, so "Carpenter" beats
+    // "Cabinetmakers and Bench Carpenters" for the query "carpenter".
+    matches.sort(function (a, b) {
+      var aPref = a.hay.indexOf(q) === 0 ? 0 : 1;
+      var bPref = b.hay.indexOf(q) === 0 ? 0 : 1;
+      if (aPref !== bPref) return aPref - bPref;
+      return a.career.name.length - b.career.name.length;
+    });
+    if (!matches.length) {
+      searchNote.textContent = 'No careers match \u201C' + raw + '\u201D.';
+      searchResults.hidden = true;
+      return;
+    }
+    searchResults.hidden = false;
+    for (var r = 0; r < matches.length; r++) {
+      (function (career) {
+        var item = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'reveal__search-result min-tap';
+        btn.textContent = career.name;
+        var letters = document.createElement('span');
+        letters.className = 'reveal__search-result-letters';
+        letters.setAttribute('aria-hidden', 'true');
+        letters.textContent = ' \u00B7 ' + careerLetters(career).join('');
+        btn.appendChild(letters);
+        btn.addEventListener('click', function () {
+          replaceWithSearchPick(career);
+        });
+        item.appendChild(btn);
+        searchResults.appendChild(item);
+      })(matches[r].career);
+    }
+  });
+
+  right.appendChild(searchSection);
 
   var cards = document.createElement('div');
   cards.className = 'career-cards';

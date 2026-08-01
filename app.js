@@ -1299,20 +1299,22 @@ function renderQuizLeftPage(item, idx, total) {
   }
   left.appendChild(tally);
 
-  // 4. Tip callout — rotates based on progress quartile
+  // 4. Tip callout — rotates based on progress quartile; scenario items get
+  //    their own prompt-fitting tip instead of the generic "Almost there."
   var tipIdx = Math.min(Math.floor(idx / 4), 2);
   var tips = [
     'No wrong answers. Go with your gut.',
     'You\'re not being scored \u2014 you\'re just describing yourself.',
     'Almost there.'
   ];
+  var scenarioTip = 'Imagine it really happening \u2014 pick the reaction that feels most like you.';
 
   var tipCallout = document.createElement('div');
   tipCallout.className = 'callout';
   tipCallout.style.maxWidth = '280px';
 
   var tipH4 = document.createElement('h4');
-  tipH4.textContent = tips[tipIdx];
+  tipH4.textContent = item.type === 'scenario' ? scenarioTip : tips[tipIdx];
   tipCallout.appendChild(tipH4);
   left.appendChild(tipCallout);
 

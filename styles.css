@@ -3012,11 +3012,11 @@ p + p {
     overflow: visible;
   }
 
-  /* Bottom room so the last quiz option / card CTA always clears the
-     fixed 44px footer when the page is scrolled to the end. (Compound
-     selector beats the later .zine__page padding shorthand below.) */
+  /* Bottom room so the last quiz option, card CTA, and card edge always
+     clear the fixed 44px footer when the page is scrolled to the end.
+     (Compound selector beats the later .zine__page padding shorthand below.) */
   .zine__page.zine__page--right {
-    padding-bottom: 72px;
+    padding-bottom: 88px;
   }
 
   /* Mobile cards are full-width and show ALL the copy — no clamps, and the

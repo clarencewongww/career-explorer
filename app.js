@@ -623,6 +623,33 @@ function renderFooter(page, showBack, backLabel, backAction, testSkip) {
 
 // ─── Render dispatcher ────────────────────────────────────────────────────
 
+// Lazy-load career-copy.js (per-career about/day copy, ~150 KB gzipped) only
+// when the reveal phase first needs it, so the first paint never pays for it.
+// Cards fall back to the letter templates until it arrives; the reveal
+// re-renders once it is available.
+var careerCopyRequested = false;
+function ensureCareerCopy(done) {
+  if (window.CAREER_COPY) { done(); return; }
+  if (!careerCopyRequested) {
+    careerCopyRequested = true;
+    var s = document.createElement('script');
+    s.src = 'career-copy.js';
+    s.async = true;
+    s.onload = done;
+    s.onerror = done;
+    document.head.appendChild(s);
+  } else {
+    var waited = 0;
+    var iv = setInterval(function () {
+      waited += 50;
+      if (window.CAREER_COPY || waited > 10000) {
+        clearInterval(iv);
+        done();
+      }
+    }, 50);
+  }
+}
+
 function render() {
   var app = document.getElementById('app');
   var phase = state.phase;
@@ -649,6 +676,11 @@ function render() {
       break;
     case 'reveal':
       content = renderReveal();
+      if (!window.CAREER_COPY) {
+        ensureCareerCopy(function () {
+          if (state.phase === 'reveal') render();
+        });
+      }
       break;
     case 'workbook':
       content = renderWorkbookPlaceholder();
@@ -1426,8 +1458,11 @@ var ROLE_DESCRIPTIONS = {
   C: 'Orderly work \u2014 organizing, tracking, and keeping systems running smoothly.'
 };
 
-// Build a short role blurb from the career's letters (deterministic)
+// Build a short role blurb from the career's letters (deterministic).
+// When per-career copy exists (career-copy.js, lazy-loaded at reveal), use it.
 function buildRoleDescription(career) {
+  var copy = window.CAREER_COPY && window.CAREER_COPY[career.id];
+  if (copy && copy.about) return [copy.about];
   var letters = careerLetters(career);
   var primary = letters.length ? letters[0] : 'R';
   var out = [ROLE_DESCRIPTIONS[primary] || ROLE_DESCRIPTIONS.R];
@@ -1451,8 +1486,11 @@ var DAYLIFE_LINES = {
   C: 'Systems, schedules, and clean stacks — the quiet satisfaction of everything exactly where it belongs.'
 };
 
-// Build up to three vignette lines from the career's RIASEC letters (deterministic)
+// Build up to three vignette lines from the career's RIASEC letters
+// (deterministic). When per-career copy exists, use its day-in-life lines.
 function buildDayLife(career) {
+  var copy = window.CAREER_COPY && window.CAREER_COPY[career.id];
+  if (copy && copy.day && copy.day.length) return copy.day.slice(0, 3);
   var letters = careerLetters(career);
   var order = letters.length ? letters : ['R'];
   var used = [];

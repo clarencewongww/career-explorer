@@ -1921,7 +1921,7 @@ p + p {
 }
 
 .journey .zine {
-  flex: 1;
+  flex: 0 1 auto; /* never flex-grow past the split-scroll panel height on desktop */
 }
 
 /* ─── 16. Footer / progress slip ─── */
@@ -2194,7 +2194,10 @@ p + p {
   }
 
   .zine__page--left {
-    overflow: hidden; /* steady — never scrolls, never spills into the footer */
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .zine__page--right {
@@ -2639,9 +2642,37 @@ p + p {
   gap: 6px;
   margin-top: 1.1em;
   padding: 12px 14px 13px;
-  background: var(--paper);
-  border: 1.5px dashed var(--paper-shadow);
+  background: var(--card-surface);
+  border: 1.5px dashed var(--card-border);
   border-radius: 3px;
+}
+
+/* Right-page content paints ABOVE the halftone dots — in dark mode the dots
+   (mix-blend: screen) sat over the labels/actions and looked like they were
+   behind them. */
+.zine__page--right > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Same lift for left-page content (tally rows etc. on halftone--pink pages). */
+.zine__page--left > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Keep the decorative halftone band absolutely positioned behind the intro
+   headline — the generic lift above must not drag it into normal flow. */
+.zine__page--left .halftone-band {
+  position: absolute;
+  z-index: 0;
+}
+
+/* The reveal action bar's own contents (shuffle button, kept counter, helper
+   copy) are nested inside .reveal__actions — lift them above the dots too. */
+.reveal__actions > * {
+  position: relative;
+  z-index: 2;
 }
 
 .reveal__search-label {

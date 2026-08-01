@@ -5,21 +5,29 @@
   <!-- Riso-pink stamp rotated -->
   <g transform="rotate(5, 256, 256)">
     <rect x="80" y="172" width="352" height="168" rx="8" fill="#FF4D7D"/>
-    <text x="256" y="240"
+    <text x="256" y="244"
           font-family="Bricolage Grotesque, system-ui, sans-serif"
-          font-size="52"
+          font-size="48"
           font-weight="800"
-          letter-spacing="6"
+          letter-spacing="4"
           fill="#F4ECD8"
-          text-anchor="middle">EXPLORE</text>
+          text-anchor="middle">CAREER</text>
     <text x="256" y="304"
           font-family="Bricolage Grotesque, system-ui, sans-serif"
-          font-size="52"
+          font-size="48"
           font-weight="800"
-          letter-spacing="6"
+          letter-spacing="4"
           fill="#F4ECD8"
-          text-anchor="middle">CAREERS</text>
+          text-anchor="middle">EXPLORER</text>
   </g>
+
+  <!-- Career emojis scattered around the stamp -->
+  <text x="140" y="128" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="44" text-anchor="middle">🛠️</text>
+  <text x="372" y="128" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="44" text-anchor="middle">🎨</text>
+  <text x="48" y="276" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="44" text-anchor="middle">🤝</text>
+  <text x="464" y="276" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="44" text-anchor="middle">💼</text>
+  <text x="140" y="432" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="44" text-anchor="middle">🔬</text>
+  <text x="372" y="432" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="44" text-anchor="middle">🗂️</text>
 
   <!-- Riso-blue hashed-square RIASEC mark (bottom-left) -->
   <g transform="translate(72, 380)">

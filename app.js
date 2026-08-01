@@ -726,7 +726,7 @@ function renderWelcome() {
   // Section label stamp
   var label = document.createElement('div');
   label.className = 'section-label section-label--pink halftone halftone--pink';
-  label.textContent = 'WELCOME \u00B7 EXPLORE CAREERS';
+  label.textContent = 'WELCOME \u00B7 CAREER EXPLORER';
   inner.appendChild(label);
 
   // Lede: H1 + subhead
@@ -1326,7 +1326,7 @@ var COLLATE_MS = 5000;
 
 // Rotating micro-captions under the stamp tiles while the answers tally.
 var COLLATE_CAPTIONS = [
-  'Folding your answers in\u2026',
+  'Collating your answers\u2026',
   'Tallying the six letter themes\u2026',
   'Sorting by what stood out\u2026',
   'Finding close matches\u2026',
@@ -1462,7 +1462,7 @@ function renderCollating() {
 
   var para = document.createElement('p');
   para.className = 'body';
-  para.textContent = 'We\u2019re folding your answers into your RIASEC profile. Four careers are about to surface.';
+  para.textContent = 'We\u2019re collating your answers into your RIASEC profile. Four careers are about to surface.';
   right.appendChild(para);
 
   // ── Assemble spread ──

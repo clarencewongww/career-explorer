@@ -23,13 +23,14 @@ python3 -m http.server
 | `app.js` | Behavior layer: state machine, page-fold navigation, quiz, collating animation, reveal matching + career cards, workbook placeholder |
 | `styles.css` | All styling — zine tokens, halftone, layouts (incl. §19 reveal override) |
 | `quiz-data.js` | The 24 quiz items (12 Likert + 6 scenario + 6 card-sort) — **demo content**, replace before production |
-| `careers-data.js` | 1,744 careers with RIASEC codes (`window.CAREERS`) |
+| `careers-data.js` | 1,515 careers (deduped) with RIASEC codes (`window.CAREERS`) |
+| `career-copy.js` | Per-career "About this role" + "Day in the life" copy (`window.CAREER_COPY`), lazy-loaded at reveal |
 | `public/` | PWA manifest + app icon |
 | `PRODUCT.md`, `DESIGN.md`, `HANDOVER.md` | Product truth, visual world, session handover |
 
 ## Extending
 
-- **Careers:** edit `careers-data.js` (each entry: `{ id, name, letters }`). Tier, role description, and day-in-life copy are generated at render time from the career's RIASEC letters — per-career researched copy is planned content work.
+- **Careers:** edit `careers-data.js` (each entry: `{ id, name, letters }`). Per-career "About this role" + "Day in the life" copy lives in `career-copy.js` (`window.CAREER_COPY`, lazy-loaded at reveal); careers without an entry fall back to RIASEC-letter templates in `app.js`. Tier stamps are computed at render time from the career's letters.
 - **Quiz:** edit `quiz-data.js`.
 - **Matching:** the reveal logic (`scoreCareerMatch`, `getCareerTier`, `pickRevealCareers` in `app.js`) computes up to 4 tiered picks from the user's top letters. On the reveal, students can **keep** cards (tap a card or its `KEEP` stamp) and **shuffle the rest** ("Show me different careers →") — kept and previously shown careers are excluded, so shuffles never repeat (`state.revealKeptIds` / `state.revealSeenIds`). Ordering is viewport-aware: desktop keeps slots stable and renders compact cards that all fit one view; mobile sorts fresh cards to the top and auto-scrolls to them.
 - **Workbook:** Sections 2–7 (Your Drivers, Your Strengths, Your Growth, Pros and Cons, Immediate Preparation, Degree Preparation) and saved progress are planned but not built.

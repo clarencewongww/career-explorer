@@ -254,9 +254,16 @@ function topRank(letter, topLetters) {
  * @return {string[]}  up to 3 letters, best first
  */
 function getUserTopLetters(profile) {
+  // The intro's "best describes you" pick is the student's stated identity:
+  // when a letter ties with the pick, the pick wins (ties elsewhere fall
+  // back to canonical RIASEC order).
+  var pick = state.initialType;
   var ranked = RIASEC_ORDER.slice().sort(function (a, b) {
     var diff = (profile[b] || 0) - (profile[a] || 0);
-    return diff !== 0 ? diff : riasecRank(a) - riasecRank(b);
+    if (diff !== 0) return diff;
+    if (a === pick && b !== pick) return -1;
+    if (b === pick && a !== pick) return 1;
+    return riasecRank(a) - riasecRank(b);
   });
   return ranked.slice(0, 3);
 }
@@ -2289,7 +2296,9 @@ function skipToCollating() {
   }
   var source;
   if (answered < SKIP_MIN_ANSWERS) {
-    profile = DEMO_PROFILE;
+    // Clone the demo profile — mutating DEMO_PROFILE itself would permanently
+    // inflate the intro-picked letter across every later skip.
+    profile = Object.assign({}, DEMO_PROFILE);
     if (state.initialType && profile[state.initialType] != null) {
       profile[state.initialType] += 1; // the intro pick still counts
     }

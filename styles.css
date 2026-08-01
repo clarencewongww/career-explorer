@@ -792,8 +792,10 @@ p + p {
   gap: 10px;
   min-height: 44px;
   padding: 6px 10px;
-  width: -moz-fit-content;
-  width: fit-content;
+  /* Full-width rows — all three "What stood out" cards are the same length
+     on every viewport (previously fit-content, so the word lengths made
+     each row a different width and read like ranking bars). */
+  width: 100%;
   background: var(--paper);
   border: 1.5px solid var(--paper-shadow);
   border-radius: 8px;
@@ -953,10 +955,6 @@ p + p {
 }
 
 @media (max-width: 479px) {
-  .reveal__topmark {
-    width: 100%;
-  }
-
   .career-plate__daylife--synthetic {
     aspect-ratio: auto;
     min-height: 108px;

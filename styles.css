@@ -2668,6 +2668,21 @@ p + p {
   z-index: 0;
 }
 
+/* Keep the intro greeting absolutely positioned in its reserved top space —
+   the generic left-page lift above must not drag it into flow on top of the
+   "YOUR JOURNEY STARTS HERE" stamp. */
+.zine__page--left .intro__greeting {
+  position: absolute;
+  z-index: 2;
+}
+
+/* Quiz tally tooltips paint ABOVE the tip callout that follows them in the
+   left page. Both used to sit at the same z-index (2), so the later
+   DOM-order callout covered open tooltips on mobile. */
+.zine__page--left .riasec-tally {
+  z-index: 3;
+}
+
 /* The reveal action bar's own contents (shuffle button, kept counter, helper
    copy) are nested inside .reveal__actions — lift them above the dots too. */
 .reveal__actions > * {

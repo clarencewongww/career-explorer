@@ -4,14 +4,21 @@
 
   <!-- Riso-pink stamp rotated -->
   <g transform="rotate(5, 256, 256)">
-    <rect x="80" y="180" width="352" height="152" rx="8" fill="#FF4D7D"/>
-    <text x="256" y="284"
+    <rect x="80" y="172" width="352" height="168" rx="8" fill="#FF4D7D"/>
+    <text x="256" y="240"
           font-family="Bricolage Grotesque, system-ui, sans-serif"
-          font-size="60"
+          font-size="52"
           font-weight="800"
           letter-spacing="6"
           fill="#F4ECD8"
-          text-anchor="middle">CAREER</text>
+          text-anchor="middle">EXPLORE</text>
+    <text x="256" y="304"
+          font-family="Bricolage Grotesque, system-ui, sans-serif"
+          font-size="52"
+          font-weight="800"
+          letter-spacing="6"
+          fill="#F4ECD8"
+          text-anchor="middle">CAREERS</text>
   </g>
 
   <!-- Riso-blue hashed-square RIASEC mark (bottom-left) -->

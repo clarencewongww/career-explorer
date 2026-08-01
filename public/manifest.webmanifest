@@ -1,6 +1,6 @@
 {
-  "name": "Career Explorer",
-  "short_name": "Careers",
+  "name": "Explore Careers",
+  "short_name": "Explore",
   "description": "Take a guided quiz, see careers you'd fit, then explore one in depth with a workbook.",
   "start_url": "../index.html",
   "scope": "../",

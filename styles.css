@@ -22,7 +22,7 @@ html {
 body {
   min-height: 100vh;
   min-height: 100dvh; /* dynamic viewport: sizes to the VISIBLE area (iOS address bar) */
-  padding-bottom: 48px; /* clearance for the fixed 44px footer */
+  padding-bottom: 0; /* footer clearance lives in the content (right-page pad), so fitting pages never full-page scroll */
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.55;
@@ -2132,7 +2132,7 @@ p + p {
    Dark: opaque warm-dark surface lighter than the near-black dotted reveal
    field, a visible warm border, and a subtle offset shadow. No glass/blur. */
 .reveal {
-  --card-surface: var(--paper-deep);
+  --card-surface: var(--paper);
   --card-border: var(--paper-shadow);
   --card-shadow:
     0 1px 0 rgba(60, 50, 30, 0.10),
@@ -2169,35 +2169,36 @@ p + p {
   flex: 0 1 auto;          /* never flex-grow under the fixed footer */
 }
 
-/* Desktop: the reveal spread is constrained to the viewport above the fixed
-   footer (44px). The left page stays steady; only the right page scrolls. */
+/* Desktop: every zine spread is constrained to the viewport above the fixed
+   footer (44px). The left page stays steady; only the right page scrolls —
+   no full-page scrolling on wide screens, for every phase. */
 @media (min-width: 768px) {
-  .zine.reveal {
+  .zine {
     height: calc(100vh - 44px);
     height: calc(100dvh - 44px);
     min-height: 0;
     grid-template-rows: minmax(0, 1fr);
   }
 
-  .reveal .zine__page {
+  .zine__page {
     aspect-ratio: auto;
-    height: auto;
+    height: 100%;
     min-height: 0;
     min-width: 0;
     align-self: stretch;
-  }
-
-  .reveal .zine__page--left {
-    overflow: hidden; /* steady — never scrolls, never spills into the footer */
-  }
-
-  .reveal .zine__page--right {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scroll-padding-bottom: 56px;
-    /* Bottom room so the last Discover-more CTA always clears the footer */
+  }
+
+  .zine__page--left {
+    overflow: hidden; /* steady — never scrolls, never spills into the footer */
+  }
+
+  .zine__page--right {
+    /* Bottom room so the last option / CTA always clears the fixed footer */
     padding-bottom: 72px;
   }
 }
@@ -3011,6 +3012,13 @@ p + p {
     overflow: visible;
   }
 
+  /* Bottom room so the last quiz option / card CTA always clears the
+     fixed 44px footer when the page is scrolled to the end. (Compound
+     selector beats the later .zine__page padding shorthand below.) */
+  .zine__page.zine__page--right {
+    padding-bottom: 72px;
+  }
+
   /* Mobile cards are full-width and show ALL the copy — no clamps, and the
      expand control stays hidden (finalizeCardExpansion only shows it when a
      card actually truncates words, which never happens here). */
@@ -3105,10 +3113,6 @@ p + p {
      that genuinely scrolls. */
   body {
     padding-bottom: 0;
-  }
-
-  .reveal .career-cards {
-    padding-bottom: 64px; /* last card's CTA clears the 44px footer */
   }
 }
 

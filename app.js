@@ -726,7 +726,7 @@ function renderWelcome() {
   // Section label stamp
   var label = document.createElement('div');
   label.className = 'section-label section-label--pink halftone halftone--pink';
-  label.textContent = 'WELCOME \u00B7 CAREER EXPLORER';
+  label.textContent = 'WELCOME \u00B7 EXPLORE CAREERS';
   inner.appendChild(label);
 
   // Lede: H1 + subhead
@@ -767,6 +767,14 @@ function renderWelcome() {
   nameField.appendChild(nameInput);
   form.appendChild(nameField);
 
+  // Name error message — shown when the name is empty on submit
+  var nameError = document.createElement('p');
+  nameError.className = 'welcome__error';
+  nameError.setAttribute('role', 'alert');
+  nameError.textContent = 'Please enter your name to begin.';
+  nameError.hidden = true;
+  form.appendChild(nameError);
+
   // Email field
   var emailField = document.createElement('label');
   emailField.className = 'welcome__field';
@@ -803,7 +811,15 @@ function renderWelcome() {
     e.preventDefault();
     var name = nameInput.value.trim();
     var email = emailInput.value.trim();
-    // Valid email format, or blank — anything else blocks the form
+    // Name is required to proceed; email is optional but must be valid.
+    if (!name) {
+      nameInput.setAttribute('aria-invalid', 'true');
+      nameError.hidden = false;
+      nameInput.focus();
+      return;
+    }
+    nameInput.removeAttribute('aria-invalid');
+    nameError.hidden = true;
     var emailValid = email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!emailValid) {
       emailInput.setAttribute('aria-invalid', 'true');
@@ -819,7 +835,11 @@ function renderWelcome() {
     });
   });
 
-  // Clear the error as soon as the student keeps typing
+  // Clear the errors as soon as the student keeps typing
+  nameInput.addEventListener('input', function () {
+    nameError.hidden = true;
+    nameInput.removeAttribute('aria-invalid');
+  });
   emailInput.addEventListener('input', function () {
     emailError.hidden = true;
     emailInput.removeAttribute('aria-invalid');
